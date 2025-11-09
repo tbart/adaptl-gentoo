@@ -11,7 +11,7 @@ SRC_URI="
 	https://github.com/SoftFever/Orca-deps-libnoise/archive/refs/tags/${PV}.tar.gz
 "
 
-LICENSE="LGPL2.1"
+LICENSE="LGPL-2.1"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
