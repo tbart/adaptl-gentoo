@@ -14,9 +14,9 @@ SRC_URI="
 	https://github.com/SoftFever/OrcaSlicer/archive/refs/tags/v${PV}.tar.gz
 "
 
-# Long story short, It's APGL3, with code forked from other AGPL3 slicers.
-# It includes some code for a "pressure advance calibration pattern test" which is GPL3
-LICENSE="AGPL3 GPL3"
+# Long story short, It's APGL-3, with code forked from other AGPL-3 slicers.
+# It includes some code for a "pressure advance calibration pattern test" which is GPL-3
+LICENSE="AGPL-3 GPL-3"
 SLOT="0"
 KEYWORDS="" # WIP
 IUSE=""
