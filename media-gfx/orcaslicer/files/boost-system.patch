@@ -1,0 +1,30 @@
+--- a/cmake/modules/FindOpenVDB.cmake	2026-04-10 11:32:57.782720444 +0200
++++ b/cmake/modules/FindOpenVDB.cmake	2026-04-10 11:33:38.247983967 +0200
+@@ -369,7 +369,7 @@
+ endif()
+ find_package(TBB ${_quiet} ${_required} COMPONENTS tbb)
+ find_package(ZLIB ${_quiet} ${_required})
+-find_package(Boost ${_quiet} ${_required} COMPONENTS iostreams system )
++find_package(Boost ${_quiet} ${_required} COMPONENTS iostreams)
+ 
+ # Use GetPrerequisites to see which libraries this OpenVDB lib has linked to
+ # which we can query for optional deps. This basically runs ldd/otoll/objdump
+@@ -493,7 +493,6 @@
+
+ set(_OPENVDB_VISIBLE_DEPENDENCIES
+   Boost::iostreams
+-  Boost::system
+   IlmBase::Half
+ )
+
+--- a/CMakeLists.txt	2026-04-10 11:31:39.152071673 +0200
++++ b/CMakeLists.txt	2026-04-10 11:32:34.959852052 +0200
+@@ -583,7 +583,7 @@
+   cmake_policy(SET CMP0167 NEW)
+ endif()
+ set(Boost_NO_SYSTEM_PATHS TRUE)
+-find_package(Boost 1.83.0 REQUIRED COMPONENTS system filesystem thread log log_setup locale regex chrono atomic date_time iostreams program_options nowide)
++find_package(Boost 1.83.0 REQUIRED COMPONENTS filesystem thread log log_setup locale regex chrono atomic date_time iostreams program_options nowide)
+ 
+ add_library(boost_libs INTERFACE)
+ add_library(boost_headeronly INTERFACE)

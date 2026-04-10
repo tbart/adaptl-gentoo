@@ -1,0 +1,46 @@
+--- a/cmake/modules/FindOpenVDB.cmake	2026-04-10 12:24:24.629805033 +0200
++++ b/cmake/modules/FindOpenVDB.cmake	2026-04-10 12:26:04.493050801 +0200
+@@ -348,6 +348,23 @@
+   return()
+ endmacro()
+ 
++# ------------------------------------------------------------------
++# Prefer modern Imath (Gentoo, OpenEXR >= 3)
++# ------------------------------------------------------------------
++find_package(Imath QUIET)
++
++if (Imath_FOUND)
++  # Imath provides Half functionality; create compatibility target
++  if (TARGET Imath::Imath AND NOT TARGET IlmBase::Half)
++    add_library(IlmBase::Half ALIAS Imath::Imath)
++  elseif (TARGET Imath::Half AND NOT TARGET IlmBase::Half)
++    add_library(IlmBase::Half ALIAS Imath::Half)
++  endif()
++endif()
++
++# ------------------------------------------------------------------
++# Legacy IlmBase fallback (older distros / vendored builds)
++# ------------------------------------------------------------------
+ find_package(IlmBase QUIET)
+ if(NOT IlmBase_FOUND)
+   pkg_check_modules(IlmBase QUIET IlmBase)
+@@ -355,7 +372,7 @@
+ if (IlmBase_FOUND AND NOT TARGET IlmBase::Half)
+   message(STATUS "Falling back to IlmBase found by pkg-config...")
+ 
+-  find_library(IlmHalf_LIBRARY NAMES Half)
++  find_library(IlmHalf_LIBRARY NAMES Half IlmHalf)
+   if(IlmHalf_LIBRARY-NOTFOUND OR NOT IlmBase_INCLUDE_DIRS)
+     just_fail("IlmBase::Half can not be found!")
+   endif()
+@@ -365,7 +382,9 @@
+     IMPORTED_LOCATION "${IlmHalf_LIBRARY}"
+     INTERFACE_INCLUDE_DIRECTORIES "${IlmBase_INCLUDE_DIRS}")
+ elseif(NOT IlmBase_FOUND)
+-  just_fail("IlmBase::Half can not be found!")
++  if (NOT Imath_FOUND)
++    just_fail("IlmBase::Half / Imath can not be found!")
++  endif()
+ endif()
+ find_package(TBB ${_quiet} ${_required} COMPONENTS tbb)
+ find_package(ZLIB ${_quiet} ${_required})

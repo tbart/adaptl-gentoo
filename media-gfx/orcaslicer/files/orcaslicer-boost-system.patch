@@ -1,0 +1,39 @@
+--- a/CMakeLists.txt	2026-04-09 18:50:51.426604879 +0200
++++ b/CMakeLists.txt	2026-04-09 18:50:52.877623015 +0200
+@@ -580,11 +580,33 @@
+ # boost::process was introduced first in version 1.64.0,
+ # boost::beast::detail::base64 was introduced first in version 1.66.0
+ if(POLICY CMP0167)
+-  cmake_policy(SET CMP0167 NEW)
++    cmake_policy(SET CMP0167 OLD)
+ endif()
+-set(Boost_NO_SYSTEM_PATHS TRUE)
+-find_package(Boost 1.83.0 REQUIRED COMPONENTS system filesystem thread log log_setup locale regex chrono atomic date_time iostreams program_options nowide)
+ 
++# Force FindBoost and disable config-mode
++set(Boost_USE_CONFIG OFF CACHE BOOL "" FORCE)
++set(Boost_NO_BOOST_CMAKE ON CACHE BOOL "" FORCE)
++set(Boost_DIR "" CACHE PATH "" FORCE)
++
++# Allow system Boost
++set(Boost_NO_SYSTEM_PATHS OFF)
++
++# Explicit Gentoo paths (required)
++set(Boost_INCLUDE_DIR   "/usr/include" CACHE PATH "" FORCE)
++set(Boost_LIBRARY_DIR   "/usr/lib64"   CACHE PATH "" FORCE)
++
++find_package(Boost 1.83.0 REQUIRED COMPONENTS
++    system
++    filesystem
++    thread
++    log
++    log_setup
++    chrono
++    atomic
++    date_time
++    iostreams
++    program_options
++)
+ add_library(boost_libs INTERFACE)
+ add_library(boost_headeronly INTERFACE)
+ 

@@ -1,0 +1,158 @@
+diff --git a/src/slic3r/Utils/TCPConsole.cpp b/src/slic3r/Utils/TCPConsole.cpp
+index 25802e3908..bc104365a9 100644
+--- a/src/slic3r/Utils/TCPConsole.cpp
++++ b/src/slic3r/Utils/TCPConsole.cpp
+@@ -1,3 +1,4 @@
++#include <boost/asio.hpp>
+ #include <boost/asio/buffer.hpp>
+ #include <boost/asio/io_context.hpp>
+ #include <boost/asio/ip/tcp.hpp>
+@@ -12,6 +13,7 @@
+ #include <iostream>
+ #include <string>
+ #include <thread>
++#include <memory>
+ 
+ #include "TCPConsole.hpp"
+ #include "SerialMessage.hpp"
+@@ -30,28 +32,35 @@ void TCPConsole::transmit_next_command()
+         return;
+     }
+ 
+-    std::this_thread::sleep_for(m_tcp_queue_delay);
++    // Avoid blocking the io_context thread: schedule a short timer instead of sleeping.
++    // If immediate transmit desired, set timer duration to zero.
++    m_temp_timer.emplace(m_io_context);
++    m_temp_timer->expires_after(m_tcp_queue_delay);
++    m_temp_timer->async_wait([this](const boost::system::error_code& ec) {
++        if (ec) return; // timer was cancelled
++        SerialMessage cmd = m_cmd_queue.front();
++        m_cmd_queue.pop_front();
+ 
+-    SerialMessage cmd = m_cmd_queue.front();
+-    m_cmd_queue.pop_front();
+-
+-    BOOST_LOG_TRIVIAL(debug) << boost::format("TCPConsole: transmitting '%3%' to %1%:%2%")
+-        % m_host_name
+-        % m_port_name
+-        % cmd.message;
+-
+-    m_send_buffer = cmd.message;
++        BOOST_LOG_TRIVIAL(debug) << boost::format("TCPConsole: transmitting '%3%' to %1%:%2%")
++            % m_host_name
++            % m_port_name
++            % cmd.message;
+ 
+-    if (cmd.messageType == Command) {
+-        m_send_buffer += m_newline;
+-    }
++        // Keep send buffer alive until write completes by using shared_ptr captured in handler.
++        auto send_buf = std::make_shared<std::string>(cmd.message);
++        if (cmd.messageType == Command) {
++            send_buf->append(m_newline);
++        }
+ 
+-    set_deadline_in(m_write_timeout);
+-    boost::asio::async_write(
+-        m_socket,
+-        boost::asio::buffer(m_send_buffer),
+-        boost::bind(&TCPConsole::handle_write, this, boost::placeholders::_1, boost::placeholders::_2, cmd.messageType)
+-    );
++        set_deadline_in(m_write_timeout);
++        boost::asio::async_write(
++            m_socket,
++            boost::asio::buffer(*send_buf),
++            [this, send_buf, messageType = cmd.messageType](const boost::system::error_code& ec, std::size_t bytes_transferred) {
++                handle_write(ec, bytes_transferred, messageType);
++            }
++        );
++    });
+ }
+ 
+ void TCPConsole::wait_next_line()
+@@ -68,10 +77,10 @@ void TCPConsole::wait_next_line()
+ // TODO: Use std::optional here
+ std::string TCPConsole::extract_next_line()
+ {
+-    char linebuf[1024];
++    std::string line;
+     std::istream is(&m_recv_buffer);
+-    is.getline(linebuf, sizeof(linebuf));
+-    return is.good() ? linebuf : std::string{};
++    if (!std::getline(is, line)) return std::string{};
++    return line;
+ }
+ 
+ void TCPConsole::handle_read(
+@@ -108,7 +117,7 @@ void TCPConsole::handle_read(
+ 
+ void TCPConsole::handle_write(
+     const boost::system::error_code& ec,
+-    std::size_t, SerialMessageType messageType)
++    std::size_t bytes_transferred, SerialMessageType messageType)
+ {
+     m_error_code = ec;
+     if (ec) {
+@@ -168,14 +177,17 @@ bool TCPConsole::run_queue()
+         m_is_connected = false;
+         m_io_context.restart();
+ 
+-        auto endpoints = m_resolver.resolve(m_host_name, m_port_name);
++        // Resolve to results_type (a range that is suitable for async_connect)
++        boost::asio::ip::tcp::resolver::results_type results =
++            m_resolver.resolve(m_host_name, m_port_name);
+ 
+-        m_socket.async_connect(endpoints->endpoint(),
++        // Use async_connect with the results range.
++        boost::asio::async_connect(m_socket, results,
+             boost::bind(&TCPConsole::handle_connect, this, boost::placeholders::_1)
+         );
+ 
+         // Loop until we get any reasonable result. Negative result is also result.
+-        // TODO: Rewrite to more graceful way using deadlime_timer
++        // TODO: Rewrite to more graceful way using deadline_timer
+         bool timeout = false;
+         while (!(timeout = is_deadline_over()) && !m_io_context.stopped()) {
+             if (m_error_code) {
+@@ -189,7 +201,14 @@ bool TCPConsole::run_queue()
+             m_error_code = make_error_code(boost::asio::error::timed_out);
+ 
+         // Socket is not closed automatically by boost
+-        m_socket.close();
++        boost::system::error_code ignored_ec;
++        m_socket.close(ignored_ec);
++
++        // cancel any pending timer used in transmit_next_command
++        if (m_temp_timer) {
++            m_temp_timer->cancel();
++            m_temp_timer.reset();
++        }
+ 
+         if (m_error_code) {
+             // We expect that message is logged in handler
+@@ -217,3 +236,4 @@ bool TCPConsole::run_queue()
+ 
+ } // namespace Utils
+ } // namespace Slic3r
++
+diff --git a/src/slic3r/Utils/TCPConsole.hpp b/src/slic3r/Utils/TCPConsole.hpp
+index e94e130a9e..860feccbd2 100644
+--- a/src/slic3r/Utils/TCPConsole.hpp
++++ b/src/slic3r/Utils/TCPConsole.hpp
+@@ -3,6 +3,7 @@
+ 
+ #include <string>
+ #include <deque>
++#include <optional>
+ #include <boost/system/error_code.hpp>
+ #include <boost/system/system_error.hpp>
+ #include <boost/asio/ip/tcp.hpp>
+@@ -88,6 +89,8 @@ private:
+     std::chrono::steady_clock::duration     m_write_timeout;
+     std::chrono::steady_clock::duration     m_read_timeout;
+     std::chrono::steady_clock::duration     m_tcp_queue_delay;
++    std::optional<boost::asio::steady_timer> m_temp_timer;
++
+ 
+     std::deque<SerialMessage>                 m_cmd_queue;
+ 

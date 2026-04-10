@@ -1,0 +1,11 @@
+--- a/src/CMakeLists.txt	2026-04-10 19:14:45.699484665 +0200
++++ b/src/CMakeLists.txt	2026-04-10 19:15:06.907307028 +0200
+@@ -125,7 +125,7 @@
+     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dev-utils/platform/unix/build_linux_image.sh.in ${CMAKE_CURRENT_BINARY_DIR}/build_linux_image.sh USE_SOURCE_PERMISSIONS @ONLY)
+ endif ()
+ 
+-target_link_libraries(OrcaSlicer libslic3r cereal::cereal)
++target_link_libraries(OrcaSlicer libslic3r cereal::cereal boost_process)
+ # target_include_directories(OrcaSlicer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/slic3r)
+ if (APPLE)
+ #    add_compile_options(-stdlib=libc++)

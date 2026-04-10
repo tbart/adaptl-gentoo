@@ -1,0 +1,56 @@
+--- a/src/slic3r/Utils/Bonjour.cpp	2026-04-10 16:44:17.239754420 +0200
++++ b/src/slic3r/Utils/Bonjour.cpp	2026-04-10 16:51:01.718651942 +0200
+@@ -921,7 +921,7 @@
+ 			socket->send();
+ 
+ 		// timer settings
+-		asio::deadline_timer timer(*io_service);
++		asio::steady_timer timer(*io_service);
+ 		retries--;
+ 		std::function<void(const error_code&)> timer_handler = [&](const error_code& error) {
+ 			// end 
+@@ -934,7 +934,7 @@
+ 			// restart timer
+ 			} else {
+ 				retries--;
+-				timer.expires_from_now(boost::posix_time::seconds(timeout));
++				timer.expires_after(std::chrono::seconds(timeout));
+ 				timer.async_wait(timer_handler);
+ 				// trigger another round of queries
+ 				for (auto * socket : sockets)
+@@ -942,7 +942,7 @@
+ 			}
+ 		};
+ 		// start timer
+-		timer.expires_from_now(boost::posix_time::seconds(timeout));
++		timer.expires_after(std::chrono::seconds(timeout));
+ 		timer.async_wait(timer_handler);
+ 		// start io_service, it will run until it has something to do - so in this case until stop is called in timer
+ 		io_service->run();
+@@ -1014,7 +1014,7 @@
+ 			socket->send();
+ 
+ 		// timer settings
+-		asio::deadline_timer timer(*io_service);
++		asio::steady_timer timer(*io_service);
+ 		retries--;
+ 		std::function<void(const error_code&)> timer_handler = [&](const error_code& error) {
+ 			int replies_count = replies.size();
+@@ -1028,7 +1028,7 @@
+ 			// restart timer
+ 			} else {
+ 				retries--;
+-				timer.expires_from_now(boost::posix_time::seconds(timeout));
++				timer.expires_after(std::chrono::seconds(timeout));
+ 				timer.async_wait(timer_handler);
+ 				// trigger another round of queries
+ 				for (auto * socket : sockets)
+@@ -1036,7 +1036,7 @@
+ 			}
+ 		};
+ 		// start timer
+-		timer.expires_from_now(boost::posix_time::seconds(timeout));
++		timer.expires_after(std::chrono::seconds(timeout));
+ 		timer.async_wait(timer_handler);
+ 		// start io_service, it will run until it has something to do - so in this case until stop is called in timer
+ 		io_service->run();
