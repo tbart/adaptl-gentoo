@@ -1,0 +1,19 @@
+--- a/src/slic3r/GUI/MainFrame.cpp	2026-04-13 11:46:47.842821756 +0200
++++ b/src/slic3r/GUI/MainFrame.cpp	2026-04-13 11:48:22.229746469 +0200
+@@ -117,12 +117,14 @@
+     static constexpr int BORDER_PX = 5;
+ 
+     ResizeEdgePanel(MainFrame* frame, Edge edge)
+-        : wxPanel(frame, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+-                  wxBORDER_NONE | wxTRANSPARENT_WINDOW)
++        : wxPanel()
+         , m_frame(frame)
+         , m_edge(edge)
+     {
+         SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
++        Create(frame, wxID_ANY, wxDefaultPosition, wxDefaultSize,
++               wxBORDER_NONE | wxTRANSPARENT_WINDOW);
++
+         Bind(wxEVT_MOTION,       &ResizeEdgePanel::OnCursorUpdate, this);
+         Bind(wxEVT_ENTER_WINDOW, &ResizeEdgePanel::OnCursorUpdate, this);
+         Bind(wxEVT_LEFT_DOWN,    &ResizeEdgePanel::OnLeftDown,     this);

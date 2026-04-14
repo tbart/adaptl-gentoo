@@ -1,0 +1,1413 @@
+--- a/src/slic3r/GUI/BBLTopbar.cpp	2026-04-13 19:10:36.638943404 +0200
++++ b/src/slic3r/GUI/BBLTopbar.cpp	2026-04-13 19:10:55.171431073 +0200
+@@ -125,9 +125,13 @@
+     int bmpX = 0, bmpY = 0;
+     int textX = 0, textY = 0;
+ 
+-    const wxBitmap& bmp = item.GetState() & wxAUI_BUTTON_STATE_DISABLED
+-        ? item.GetDisabledBitmap()
+-        : item.GetBitmap();
++    wxBitmap bmp;
++
++    if (item.GetState() & wxAUI_BUTTON_STATE_DISABLED) {
++        bmp = item.GetDisabledBitmapFor(wnd);
++    } else {
++        bmp = item.GetBitmapFor(wnd);
++    }
+ 
+     const wxSize bmpSize = bmp.IsOk() ? bmp.GetScaledSize() : wxSize(0, 0);
+ 
+--- a/src/slic3r/GUI/MainFrame.cpp	2026-04-13 11:46:47.000000000 +0200
++++ b/src/slic3r/GUI/MainFrame.cpp	2026-04-13 11:57:46.000000000 +0200
+@@ -117,12 +117,14 @@
+     static constexpr int BORDER_PX = 5;
+ 
+     ResizeEdgePanel(MainFrame* frame, Edge edge)
+-        : wxPanel(frame, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+-                  wxBORDER_NONE | wxTRANSPARENT_WINDOW)
++        : wxPanel()
+         , m_frame(frame)
+         , m_edge(edge)
+     {
+         SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
++        Create(frame, wxID_ANY, wxDefaultPosition, wxDefaultSize,
++               wxBORDER_NONE | wxTRANSPARENT_WINDOW);
++
+         Bind(wxEVT_MOTION,       &ResizeEdgePanel::OnCursorUpdate, this);
+         Bind(wxEVT_ENTER_WINDOW, &ResizeEdgePanel::OnCursorUpdate, this);
+         Bind(wxEVT_LEFT_DOWN,    &ResizeEdgePanel::OnLeftDown,     this);
+--- a/src/slic3r/GUI/BBLStatusBar.cpp	2026-04-13 12:20:45.000000000 +0200
++++ b/src/slic3r/GUI/BBLStatusBar.cpp	2026-04-13 12:23:17.000000000 +0200
+@@ -55,9 +55,9 @@
+         m_cancelbutton->Hide();
+     });
+ 
+-    m_sizer->Add(m_object_info_sizer, 1, wxEXPAND | wxALL | wxALIGN_LEFT, 5);
+-    m_sizer->Add(m_slice_info_sizer, 1, wxEXPAND | wxALL | wxALIGN_LEFT, 5);
+-    m_sizer->Add(m_status_text, 1, wxEXPAND | wxALL | wxALIGN_LEFT, 5);
++    m_sizer->Add(m_object_info_sizer, 1, wxEXPAND | wxALL, 5);
++    m_sizer->Add(m_slice_info_sizer, 1, wxEXPAND | wxALL, 5);
++    m_sizer->Add(m_status_text, 1, wxEXPAND | wxALL, 5);
+     m_sizer->Add(m_prog, 0, wxEXPAND | wxLEFT | wxALL, 5);
+     m_sizer->Add(m_cancelbutton, 0, wxEXPAND | wxALL, 5);
+     m_sizer->SetSizeHints(m_self);
+--- a/src/slic3r/GUI/AMSSetting.cpp	2026-04-13 12:23:17.000000000 +0200
++++ b/src/slic3r/GUI/AMSSetting.cpp	2026-04-13 15:22:03.000000000 +0200
+@@ -61,7 +61,7 @@
+     m_title_Insert_material_auto_read->SetFont(::Label::Head_13);
+     m_title_Insert_material_auto_read->SetForegroundColour(AMS_SETTING_GREY800);
+     m_title_Insert_material_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
+-    m_sizer_Insert_material->Add(m_title_Insert_material_auto_read, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
++    m_sizer_Insert_material->Add(m_title_Insert_material_auto_read, 0, wxALIGN_CENTER_VERTICAL, 0);
+ 
+     wxBoxSizer *m_sizer_Insert_material_tip = new wxBoxSizer(wxHORIZONTAL);
+     m_sizer_Insert_material_tip_inline      = new wxBoxSizer(wxVERTICAL);
+@@ -116,7 +116,7 @@
+     m_title_starting_auto_read->SetFont(::Label::Head_13);
+     m_title_starting_auto_read->SetForegroundColour(AMS_SETTING_GREY800);
+     m_title_starting_auto_read->Wrap(AMS_SETTING_BODY_WIDTH);
+-    m_sizer_starting->Add(m_title_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
++    m_sizer_starting->Add(m_title_starting_auto_read, 0, wxALIGN_CENTER_VERTICAL, 0);
+ 
+     wxBoxSizer *m_sizer_starting_tip = new wxBoxSizer(wxHORIZONTAL);
+     m_sizer_starting_tip->Add(0, 0, 0, wxLEFT, 10);
+@@ -153,7 +153,7 @@
+     m_title_remain->SetFont(::Label::Head_13);
+     m_title_remain->SetForegroundColour(AMS_SETTING_GREY800);
+     m_title_remain->Wrap(AMS_SETTING_BODY_WIDTH);
+-    m_sizer_remain->Add(m_title_remain, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
++    m_sizer_remain->Add(m_title_remain, 0, wxALIGN_CENTER_VERTICAL, 0);
+ 
+ 
+ 
+@@ -181,7 +181,7 @@
+     m_title_switch_filament->SetFont(::Label::Head_13);
+     m_title_switch_filament->SetForegroundColour(AMS_SETTING_GREY800);
+     m_title_switch_filament->Wrap(AMS_SETTING_BODY_WIDTH);
+-    m_sizer_switch_filament->Add(m_title_switch_filament, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT, 0);
++    m_sizer_switch_filament->Add(m_title_switch_filament, 0, wxALIGN_CENTER_VERTICAL, 0);
+ 
+ 
+ 
+@@ -618,7 +618,7 @@
+     h_sizer->AddStretchSpacer();
+     h_sizer->Add(m_type_combobox, 0, wxEXPAND);
+     h_sizer->Add(m_switching_icon, 0, wxALIGN_CENTER);
+-    h_sizer->Add(m_switching_tips, 0, wxEXPAND | wxLEFT | wxALIGN_CENTER, FromDIP(8));
++    h_sizer->Add(m_switching_tips, 0, wxEXPAND | wxLEFT, FromDIP(8));
+     SetSizer(h_sizer);
+     Layout();
+     Fit();
+@@ -754,7 +754,7 @@
+     m_btn_rearrange->Bind(wxEVT_BUTTON, &AMSSettingArrangeAMSOrder::OnBtnRearrangeClicked, this);
+     h_sizer->Add(title, 0);
+     h_sizer->AddStretchSpacer();
+-    h_sizer->Add(m_btn_rearrange, 0, wxEXPAND | wxALIGN_CENTER_VERTICAL);
++    h_sizer->Add(m_btn_rearrange, 0, wxEXPAND);
+     SetSizer(h_sizer);
+     Layout();
+     Fit();
+--- a/src/slic3r/GUI/AMSMaterialsSetting.cpp	2026-04-13 12:25:48.000000000 +0200
++++ b/src/slic3r/GUI/AMSMaterialsSetting.cpp	2026-04-13 12:26:19.000000000 +0200
+@@ -334,7 +334,7 @@
+     m_input_k_val->SetMinSize(wxSize(FromDIP(245), -1));
+     m_input_k_val->SetMaxSize(wxSize(FromDIP(245), -1));
+     m_input_k_val->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+-    kn_val_sizer->Add(m_input_k_val, 0, wxALL | wxEXPAND | wxALIGN_CENTER_VERTICAL, FromDIP(0));
++    kn_val_sizer->Add(m_input_k_val, 0, wxALL | wxEXPAND, FromDIP(0));
+ 
+     // n params input
+     wxBoxSizer* n_sizer = new wxBoxSizer(wxHORIZONTAL);
+@@ -345,7 +345,7 @@
+     kn_val_sizer->Add(m_n_param, 1, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
+     m_input_n_val = new TextInput(parent, wxEmptyString, wxEmptyString, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_CENTRE | wxTE_PROCESS_ENTER);
+     m_input_n_val->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+-    kn_val_sizer->Add(m_input_n_val, 0, wxALL | wxEXPAND | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    kn_val_sizer->Add(m_input_n_val, 0, wxALL | wxEXPAND, FromDIP(5));
+     m_n_param->Hide();
+     m_input_n_val->Hide();
+ 
+--- a/src/slic3r/GUI/CalibrationWizardPresetPage.cpp	2026-04-13 12:26:19.000000000 +0200
++++ b/src/slic3r/GUI/CalibrationWizardPresetPage.cpp	2026-04-13 12:27:31.000000000 +0200
+@@ -1139,8 +1139,8 @@
+     else {
+         m_main_sizer->GetStaticBox()->SetLabel(_L("Right Nozzle"));
+         m_deputy_sizer->GetStaticBox()->SetLabel(_L("Left Nozzle"));
+-        m_multi_exturder_ams_sizer->Add(m_deputy_sizer, 1, wxEXPAND | wxALL | wxALIGN_BOTTOM, 10);
+-        m_multi_exturder_ams_sizer->Add(m_main_sizer, 1, wxEXPAND | wxALL | wxALIGN_BOTTOM, 10);
++        m_multi_exturder_ams_sizer->Add(m_deputy_sizer, 1, wxEXPAND | wxALL, 10);
++        m_multi_exturder_ams_sizer->Add(m_main_sizer, 1, wxEXPAND | wxALL, 10);
+     }
+     m_multi_extruder_ams_panel_sizer->Add(m_multi_exturder_ams_sizer);
+ 
+@@ -2152,8 +2152,8 @@
+ 
+             m_main_sizer->GetStaticBox()->SetLabel(_L("Right Nozzle"));
+             m_deputy_sizer->GetStaticBox()->SetLabel(_L("Left Nozzle"));
+-            m_multi_exturder_ams_sizer->Add(m_deputy_sizer, 1, wxEXPAND | wxALL | wxALIGN_BOTTOM, 10);
+-            m_multi_exturder_ams_sizer->Add(m_main_sizer, 1, wxEXPAND | wxALL | wxALIGN_BOTTOM, 10);
++            m_multi_exturder_ams_sizer->Add(m_deputy_sizer, 1, wxEXPAND | wxALL, 10);
++            m_multi_exturder_ams_sizer->Add(m_main_sizer, 1, wxEXPAND | wxALL, 10);
+ 
+             m_main_extruder_on_left = false;
+         }
+@@ -2163,8 +2163,8 @@
+ 
+             m_main_sizer->GetStaticBox()->SetLabel(_L("Left Nozzle"));
+             m_deputy_sizer->GetStaticBox()->SetLabel(_L("Right Nozzle"));
+-            m_multi_exturder_ams_sizer->Add(m_main_sizer, 1, wxEXPAND | wxALL | wxALIGN_BOTTOM, 10);
+-            m_multi_exturder_ams_sizer->Add(m_deputy_sizer, 1, wxEXPAND | wxALL | wxALIGN_BOTTOM, 10);
++            m_multi_exturder_ams_sizer->Add(m_main_sizer, 1, wxEXPAND | wxALL, 10);
++            m_multi_exturder_ams_sizer->Add(m_deputy_sizer, 1, wxEXPAND | wxALL, 10);
+ 
+             m_main_extruder_on_left = true;
+         }
+--- a/src/slic3r/GUI/CreatePresetsDialog.cpp	2026-04-13 12:27:31.000000000 +0200
++++ b/src/slic3r/GUI/CreatePresetsDialog.cpp	2026-04-13 12:29:33.000000000 +0200
+@@ -767,7 +767,7 @@
+     wxStaticText *static_vendor_text = new wxStaticText(this, wxID_ANY, _L("Vendor"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     // Convert all std::any to std::string
+     std::vector<std::string> string_vendors;
+@@ -808,7 +808,7 @@
+         event.Skip();
+     });
+     m_filament_custom_vendor_input->Hide();
+-    vendor_sizer->Add(textInputSizer, 0, wxEXPAND | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    vendor_sizer->Add(textInputSizer, 0, wxEXPAND, FromDIP(10));
+ 
+     wxBoxSizer *comboBoxSizer      = new wxBoxSizer(wxVERTICAL);
+     wxBoxSizer *checkbox_sizer     = new wxBoxSizer(wxHORIZONTAL);
+@@ -845,7 +845,7 @@
+ 
+     comboBoxSizer->Add(vendor_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
+     comboBoxSizer->Add(checkbox_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
+-    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     return horizontal_sizer;
+ 
+@@ -859,7 +859,7 @@
+     wxStaticText *static_type_text = new wxStaticText(this, wxID_ANY, _L("Type"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     wxArrayString filament_type;
+     for (const wxString filament : m_system_filament_types_set) {
+@@ -873,7 +873,7 @@
+     m_filament_type_combobox->SetLabelColor(DEFAULT_PROMPT_TEXT_COLOUR);
+     m_filament_type_combobox->Set(filament_type);
+     comboBoxSizer->Add(m_filament_type_combobox, 0, wxEXPAND | wxALL, 0);
+-    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     m_filament_type_combobox->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent &e) {
+         m_filament_type_combobox->SetLabelColor(*wxBLACK);
+@@ -905,7 +905,7 @@
+     wxStaticText *static_serial_text = new wxStaticText(this, wxID_ANY, _L("Serial"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     wxBoxSizer *comboBoxSizer = new wxBoxSizer(wxVERTICAL);
+     m_filament_serial_input   = new TextInput(this, "", "", "", wxDefaultPosition, NAME_OPTION_COMBOBOX_SIZE, wxTE_PROCESS_ENTER);
+@@ -924,7 +924,7 @@
+     static_eg_text->SetForegroundColour(wxColour("#6B6B6B"));
+     static_eg_text->SetFont(::Label::Body_12);
+     comboBoxSizer->Add(static_eg_text, 0, wxEXPAND | wxTOP, FromDIP(5));
+-    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     return horizontal_sizer;
+ }
+@@ -937,7 +937,7 @@
+     wxStaticText *static_filament_preset_text = new wxStaticText(this, wxID_ANY, _L("Filament Preset"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_filament_preset_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *  comboBoxSizer  = new wxBoxSizer(wxVERTICAL);
+     comboBoxSizer->Add(create_radio_item(m_create_type.base_filament, this, wxEmptyString, m_create_type_btns), 0, wxEXPAND | wxALL, 0);
+@@ -1012,7 +1012,7 @@
+ 
+     comboBoxSizer->Add(create_radio_item(m_create_type.base_filament_preset, this, wxEmptyString, m_create_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
+ 
+-    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(comboBoxSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     horizontal_sizer->Add(0, 0, 0, wxLEFT, FromDIP(30));
+ 
+@@ -1028,7 +1028,7 @@
+     m_filament_preset_panel->SetSize(PRINTER_LIST_SIZE);
+     m_filament_presets_sizer = new wxGridSizer(3, FromDIP(5), FromDIP(5));
+     m_filament_preset_panel->SetSizer(m_filament_presets_sizer);
+-    vertical_sizer->Add(m_filament_preset_panel, 0, wxEXPAND | wxTOP | wxALIGN_CENTER_HORIZONTAL, FromDIP(5));
++    vertical_sizer->Add(m_filament_preset_panel, 0, wxEXPAND | wxTOP, FromDIP(5));
+ 
+     return vertical_sizer;
+ }
+@@ -1644,16 +1644,16 @@
+     step_switch_panel->SetBackgroundColour(*wxWHITE);
+     horizontal_sizer->Add(0, 0, 1, wxEXPAND,0);
+     m_step_1 = new wxStaticBitmap(step_switch_panel, wxID_ANY, create_scaled_bitmap("step_1", nullptr, FromDIP(20)), wxDefaultPosition, wxDefaultSize);
+-    horizontal_sizer->Add(m_step_1, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
++    horizontal_sizer->Add(m_step_1, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(3));
+     wxStaticText *static_create_printer_text = new wxStaticText(step_switch_panel, wxID_ANY, m_create_type.create_printer, wxDefaultPosition, wxDefaultSize);
+-    horizontal_sizer->Add(static_create_printer_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
++    horizontal_sizer->Add(static_create_printer_text, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(3));
+     auto divider_line = new wxPanel(step_switch_panel, wxID_ANY, wxDefaultPosition, wxSize(FromDIP(50), 1));
+     divider_line->SetBackgroundColour(PRINTER_LIST_COLOUR);
+     horizontal_sizer->Add(divider_line, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
+     m_step_2 = new wxStaticBitmap(step_switch_panel, wxID_ANY, create_scaled_bitmap("step_2_ready", nullptr, FromDIP(20)), wxDefaultPosition, wxDefaultSize);
+-    horizontal_sizer->Add(m_step_2, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
++    horizontal_sizer->Add(m_step_2, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(3));
+     wxStaticText *static_import_presets_text = new wxStaticText(step_switch_panel, wxID_ANY, _L("Import Preset"), wxDefaultPosition, wxDefaultSize);
+-    horizontal_sizer->Add(static_import_presets_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(3));
++    horizontal_sizer->Add(static_import_presets_text, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(3));
+     horizontal_sizer->Add(0, 0, 1, wxEXPAND, 0);
+ 
+     step_switch_panel->SetSizer(horizontal_sizer);
+@@ -1704,13 +1704,13 @@
+     wxStaticText *static_serial_text = new wxStaticText(parent, wxID_ANY, _L("Create Type"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *radioBoxSizer = new wxBoxSizer(wxVERTICAL);
+ 
+     radioBoxSizer->Add(create_radio_item(m_create_type.create_printer, parent, wxEmptyString, m_create_type_btns), 0, wxEXPAND | wxALL, 0);
+     radioBoxSizer->Add(create_radio_item(m_create_type.create_nozzle, parent, wxEmptyString, m_create_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
+-    horizontal_sizer->Add(radioBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(radioBoxSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     return horizontal_sizer;
+ }
+@@ -1723,7 +1723,7 @@
+     wxStaticText *static_vendor_text = new wxStaticText(parent, wxID_ANY, _L("Printer"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *vertical_sizer = new wxBoxSizer(wxVERTICAL);
+     wxBoxSizer *comboBoxSizer = new wxBoxSizer(wxHORIZONTAL);
+@@ -1851,7 +1851,7 @@
+ 
+     vertical_sizer->Add(checkbox_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
+ 
+-    horizontal_sizer->Add(vertical_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(vertical_sizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     return horizontal_sizer;
+ 
+@@ -1865,7 +1865,7 @@
+     wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Nozzle Diameter"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *vertical_sizer = new wxBoxSizer(wxVERTICAL);
+     wxBoxSizer *comboBoxSizer = new wxBoxSizer(wxHORIZONTAL);
+@@ -1930,7 +1930,7 @@
+     });
+ 
+     vertical_sizer->Add(checkbox_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
+-    horizontal_sizer->Add(vertical_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(vertical_sizer, 0, wxEXPAND | wxALL, FromDIP(10));
+     horizontal_sizer->Add(0, 0, 0, wxEXPAND | wxLEFT, FromDIP(200));
+ 
+     return horizontal_sizer;
+@@ -1944,12 +1944,12 @@
+     wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Bed Shape"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *  bed_shape_sizer       = new wxBoxSizer(wxVERTICAL);
+     wxStaticText *static_bed_shape_text = new wxStaticText(parent, wxID_ANY, _L("Rectangle"), wxDefaultPosition, wxDefaultSize);
+     bed_shape_sizer->Add(static_bed_shape_text, 0, wxEXPAND | wxALL, 0);
+-    horizontal_sizer->Add(bed_shape_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(bed_shape_sizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     return horizontal_sizer;
+ }
+@@ -1962,26 +1962,26 @@
+     wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Printable Space"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *  length_sizer          = new wxBoxSizer(wxVERTICAL);
+      // ORCA use icon on input box to match style with other Point fields
+-    horizontal_sizer->Add(length_sizer, 0, wxEXPAND | wxLEFT | wxTOP | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(length_sizer, 0, wxEXPAND | wxLEFT | wxTOP, FromDIP(10));
+     wxBoxSizer *length_input_sizer      = new wxBoxSizer(wxVERTICAL);
+     m_bed_size_x_input = new TextInput(parent, "200", _L("mm"), "inputbox_x", wxDefaultPosition, PRINTER_SPACE_SIZE, wxTE_PROCESS_ENTER);
+     wxTextValidator validator(wxFILTER_DIGITS);
+     m_bed_size_x_input->GetTextCtrl()->SetValidator(validator);
+     length_input_sizer->Add(m_bed_size_x_input, 0, wxEXPAND | wxLEFT, FromDIP(5));
+-    horizontal_sizer->Add(length_input_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(length_input_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     wxBoxSizer *  width_sizer      = new wxBoxSizer(wxVERTICAL);
+     // ORCA use icon on input box to match style with other Point fields
+-    horizontal_sizer->Add(width_sizer, 0, wxEXPAND | wxLEFT | wxTOP | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(width_sizer, 0, wxEXPAND | wxLEFT | wxTOP, FromDIP(10));
+     wxBoxSizer *width_input_sizer      = new wxBoxSizer(wxVERTICAL);
+     m_bed_size_y_input            = new TextInput(parent, "200", _L("mm"), "inputbox_y", wxDefaultPosition, PRINTER_SPACE_SIZE, wxTE_PROCESS_ENTER);
+     m_bed_size_y_input->GetTextCtrl()->SetValidator(validator);
+     width_input_sizer->Add(m_bed_size_y_input, 0, wxEXPAND | wxALL, 0);
+-    horizontal_sizer->Add(width_input_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(width_input_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     return horizontal_sizer;
+ 
+@@ -1995,26 +1995,26 @@
+     wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Origin"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *  length_sizer       = new wxBoxSizer(wxVERTICAL);
+     // ORCA use icon on input box to match style with other Point fields
+-    horizontal_sizer->Add(length_sizer, 0, wxEXPAND | wxLEFT | wxTOP | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(length_sizer, 0, wxEXPAND | wxLEFT | wxTOP, FromDIP(10));
+     wxBoxSizer *length_input_sizer = new wxBoxSizer(wxVERTICAL);
+     m_bed_origin_x_input           = new TextInput(parent, "0", _L("mm"), "inputbox_x", wxDefaultPosition, PRINTER_SPACE_SIZE, wxTE_PROCESS_ENTER);
+     wxTextValidator validator(wxFILTER_DIGITS);
+     m_bed_origin_x_input->GetTextCtrl()->SetValidator(validator);
+     length_input_sizer->Add(m_bed_origin_x_input, 0, wxEXPAND | wxLEFT, FromDIP(5)); // Align with other
+-    horizontal_sizer->Add(length_input_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(length_input_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     wxBoxSizer *  width_sizer       = new wxBoxSizer(wxVERTICAL);
+     // ORCA use icon on input box to match style with other Point fields
+-    horizontal_sizer->Add(width_sizer, 0, wxEXPAND | wxLEFT | wxTOP | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(width_sizer, 0, wxEXPAND | wxLEFT | wxTOP, FromDIP(10));
+     wxBoxSizer *width_input_sizer = new wxBoxSizer(wxVERTICAL);
+     m_bed_origin_y_input          = new TextInput(parent, "0", _L("mm"), "inputbox_y", wxDefaultPosition, PRINTER_SPACE_SIZE, wxTE_PROCESS_ENTER);
+     m_bed_origin_y_input->GetTextCtrl()->SetValidator(validator);
+     width_input_sizer->Add(m_bed_origin_y_input, 0, wxEXPAND | wxALL, 0);
+-    horizontal_sizer->Add(width_input_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(width_input_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     return horizontal_sizer;
+ }
+@@ -2027,7 +2027,7 @@
+     wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Hot Bed STL"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *hot_bed_stl_sizer = new wxBoxSizer(wxVERTICAL);
+ 
+@@ -2037,11 +2037,11 @@
+ 
+     hot_bed_stl_sizer->Add(m_button_bed_stl, 0, wxEXPAND | wxALL, 0);
+ 
+-    horizontal_sizer->Add(hot_bed_stl_sizer, 0, wxEXPAND | wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(hot_bed_stl_sizer, 0, wxEXPAND | wxLEFT, FromDIP(10));
+ 
+     m_upload_stl_tip_text = new wxStaticText(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+     m_upload_stl_tip_text->SetLabelText(_L("Empty"));
+-    horizontal_sizer->Add(m_upload_stl_tip_text, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(m_upload_stl_tip_text, 0, wxEXPAND | wxALL, FromDIP(10));
+     return horizontal_sizer;
+ }
+ 
+@@ -2053,7 +2053,7 @@
+     wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Hot Bed SVG"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *hot_bed_stl_sizer = new wxBoxSizer(wxVERTICAL);
+ 
+@@ -2063,11 +2063,11 @@
+ 
+     hot_bed_stl_sizer->Add(m_button_bed_svg, 0, wxEXPAND | wxALL, 0);
+ 
+-    horizontal_sizer->Add(hot_bed_stl_sizer, 0, wxEXPAND | wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(hot_bed_stl_sizer, 0, wxEXPAND | wxLEFT, FromDIP(10));
+ 
+     m_upload_svg_tip_text = new wxStaticText(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize);
+     m_upload_svg_tip_text->SetLabelText(_L("Empty"));
+-    horizontal_sizer->Add(m_upload_svg_tip_text, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(m_upload_svg_tip_text, 0, wxEXPAND | wxALL, FromDIP(10));
+     return horizontal_sizer;
+ }
+ 
+@@ -2079,14 +2079,14 @@
+     wxStaticText *static_type_text = new wxStaticText(parent, wxID_ANY, _L("Max Print Height"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *hight_input_sizer = new wxBoxSizer(wxVERTICAL);
+     m_print_height_input          = new TextInput(parent, "200", _L("mm"), wxEmptyString, wxDefaultPosition, PRINTER_SPACE_SIZE, wxTE_PROCESS_ENTER); // Use same alignment with all other input boxes
+     wxTextValidator validator(wxFILTER_DIGITS);
+     m_print_height_input->GetTextCtrl()->SetValidator(validator);
+     hight_input_sizer->Add(m_print_height_input, 0, wxEXPAND | wxLEFT, FromDIP(5));
+-    horizontal_sizer->Add(hight_input_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(5));
++    horizontal_sizer->Add(hight_input_sizer, 0, wxEXPAND | wxALL, FromDIP(5));
+ 
+     return horizontal_sizer;
+ }
+@@ -2592,7 +2592,7 @@
+     wxStaticText *static_vendor_text = new wxStaticText(parent, wxID_ANY, _L("Printer Preset"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *  vertical_sizer = new wxBoxSizer(wxVERTICAL);
+     wxStaticText *combobox_title = new wxStaticText(parent, wxID_ANY, m_create_type.base_curr_printer, wxDefaultPosition, wxDefaultSize, 0);
+@@ -2625,7 +2625,7 @@
+     comboBox_sizer->Add(m_printer_model, 0, wxEXPAND | wxLEFT, FromDIP(10));
+     vertical_sizer->Add(comboBox_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
+ 
+-    horizontal_sizer->Add(vertical_sizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(vertical_sizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     return horizontal_sizer;
+ 
+@@ -2639,13 +2639,13 @@
+     wxStaticText *static_serial_text = new wxStaticText(parent, wxID_ANY, _L("Presets"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *radioBoxSizer = new wxBoxSizer(wxVERTICAL);
+ 
+     radioBoxSizer->Add(create_radio_item(m_create_type.base_template, parent, wxEmptyString, m_create_presets_btns), 0, wxEXPAND | wxALL, 0);
+     radioBoxSizer->Add(create_radio_item(m_create_type.base_curr_printer, parent, wxEmptyString, m_create_presets_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
+-    horizontal_sizer->Add(radioBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(radioBoxSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     return horizontal_sizer;
+ }
+@@ -2731,7 +2731,7 @@
+     m_preset_template_panel->SetSizer(m_filament_sizer);
+     m_scrooled_preset_sizer->Add(m_preset_template_panel, 0, wxEXPAND | wxALL, 0);
+     m_scrolled_preset_window->SetSizerAndFit(m_scrooled_preset_sizer);
+-    vertical_sizer->Add(m_scrolled_preset_window, 0, wxEXPAND | wxLEFT | wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    vertical_sizer->Add(m_scrolled_preset_window, 0, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
+ 
+     return vertical_sizer;
+ }
+@@ -3718,7 +3718,7 @@
+     wxStaticText *static_serial_text = new wxStaticText(parent, wxID_ANY, _L("Presets"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     wxBoxSizer *radioBoxSizer = new wxBoxSizer(wxVERTICAL);
+ 
+@@ -3738,7 +3738,7 @@
+     radioBoxSizer->Add(create_radio_item(m_exprot_type.printer_preset, parent, wxEmptyString, m_export_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
+     radioBoxSizer->Add(create_radio_item(m_exprot_type.filament_preset, parent, wxEmptyString, m_export_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
+     radioBoxSizer->Add(create_radio_item(m_exprot_type.process_preset, parent, wxEmptyString, m_export_type_btns), 0, wxEXPAND | wxTOP, FromDIP(10));
+-    horizontal_sizer->Add(radioBoxSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(radioBoxSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     return horizontal_sizer;
+ }
+@@ -4281,7 +4281,7 @@
+     m_serial_text           = new wxStaticText(parent, wxID_ANY, _L("Please select a type you want to export"), wxDefaultPosition, wxDefaultSize);
+     optionSizer->Add(m_serial_text, 0, wxEXPAND | wxALL, 0);
+     optionSizer->SetMinSize(OPTION_SIZE);
+-    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    horizontal_sizer->Add(optionSizer, 0, wxEXPAND | wxALL, FromDIP(10));
+     m_scrolled_preset_window = new wxScrolledWindow(parent);
+     m_scrolled_preset_window->SetScrollRate(5, 5);
+     m_scrolled_preset_window->SetBackgroundColour(*wxWHITE);
+@@ -4450,7 +4450,7 @@
+     m_main_sizer->Add(create_add_filament_btn(), 0, wxEXPAND | wxALL, 0);
+     m_main_sizer->Add(create_preset_tree_sizer(), 0, wxEXPAND | wxALL, 0);
+     m_note_text = new wxStaticText(this, wxID_ANY, _L("Note: If the only preset under this filament is deleted, the filament will be deleted after exiting the dialog."));
+-    m_main_sizer->Add(m_note_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    m_main_sizer->Add(m_note_text, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, FromDIP(10));
+     m_note_text->Hide();
+     m_main_sizer->Add(create_dialog_buttons(), 0, wxEXPAND);
+ 
+@@ -4652,31 +4652,31 @@
+     wxStaticText *static_vendor_text = new wxStaticText(this, wxID_ANY, _L("Vendor"), wxDefaultPosition, wxDefaultSize);
+     vendor_key_sizer->Add(static_vendor_text, 0, wxEXPAND | wxALL, 0);
+     vendor_key_sizer->SetMinSize(OPTION_SIZE);
+-    vendor_sizer->Add(vendor_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    vendor_sizer->Add(vendor_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(10));
+ 
+     wxBoxSizer *vendor_value_sizer = new wxBoxSizer(wxVERTICAL);
+     wxStaticText *vendor_text = new wxStaticText(this, wxID_ANY, from_u8(m_vendor_name), wxDefaultPosition, wxDefaultSize);
+     vendor_value_sizer->Add(vendor_text, 0, wxEXPAND | wxALL, 0);
+-    vendor_sizer->Add(vendor_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    vendor_sizer->Add(vendor_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(10));
+ 
+     //type
+     wxBoxSizer *  type_key_sizer   = new wxBoxSizer(wxVERTICAL);
+     wxStaticText *static_type_text = new wxStaticText(this, wxID_ANY, _L("Type"), wxDefaultPosition, wxDefaultSize);
+     type_key_sizer->Add(static_type_text, 0, wxEXPAND | wxALL, 0);
+     type_key_sizer->SetMinSize(OPTION_SIZE);
+-    type_sizer->Add(type_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    type_sizer->Add(type_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(10));
+ 
+     wxBoxSizer *  type_value_sizer = new wxBoxSizer(wxVERTICAL);
+     wxStaticText *type_text        = new wxStaticText(this, wxID_ANY, from_u8(m_filament_type), wxDefaultPosition, wxDefaultSize);
+     type_value_sizer->Add(type_text, 0, wxEXPAND | wxALL, 0);
+-    type_sizer->Add(type_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    type_sizer->Add(type_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(10));
+ 
+     //serial
+     wxBoxSizer *  serial_key_sizer   = new wxBoxSizer(wxVERTICAL);
+     wxStaticText *static_serial_text = new wxStaticText(this, wxID_ANY, _L("Serial"), wxDefaultPosition, wxDefaultSize);
+     serial_key_sizer->Add(static_serial_text, 0, wxEXPAND | wxALL, 0);
+     serial_key_sizer->SetMinSize(OPTION_SIZE);
+-    serial_sizer->Add(serial_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    serial_sizer->Add(serial_key_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(10));
+ 
+     wxBoxSizer *  serial_value_sizer = new wxBoxSizer(wxVERTICAL);
+     wxString      full_filamnet_serial = from_u8(m_filament_serial);
+@@ -4688,7 +4688,7 @@
+     wxToolTip *   toolTip     = new wxToolTip(full_filamnet_serial);
+     serial_text->SetToolTip(toolTip);
+     serial_value_sizer->Add(serial_text, 0, wxEXPAND | wxALL, 0);
+-    serial_sizer->Add(serial_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    serial_sizer->Add(serial_value_sizer, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(10));
+ 
+     basic_info_sizer->Add(vendor_sizer, 0, wxEXPAND | wxALL, 0);
+     basic_info_sizer->Add(type_sizer, 0, wxEXPAND | wxALL, 0);
+@@ -4735,7 +4735,7 @@
+     wxBoxSizer* m_preset_tree_window_sizer = new wxBoxSizer(wxVERTICAL);
+     m_preset_tree_window_sizer->Add(m_preset_tree_panel, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(10));
+     m_preset_tree_window->SetSizerAndFit(m_preset_tree_window_sizer);
+-    filament_preset_tree_sizer->Add(m_preset_tree_window, 0, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    filament_preset_tree_sizer->Add(m_preset_tree_window, 0, wxEXPAND | wxALL, FromDIP(10));
+ 
+     return filament_preset_tree_sizer;
+ }
+--- a/src/slic3r/GUI/CloneDialog.cpp	2026-04-13 12:29:33.000000000 +0200
++++ b/src/slic3r/GUI/CloneDialog.cpp	2026-04-13 12:30:16.000000000 +0200
+@@ -26,7 +26,7 @@
+         ProcessEventLocally(e);
+         e.Skip();
+     });
+-    f_sizer->Add(count_label  , 0, wxEXPAND | wxALIGN_CENTER_VERTICAL);
++    f_sizer->Add(count_label, 0, wxEXPAND);
+     f_sizer->Add(m_count_spin, 0, wxALIGN_CENTER_VERTICAL);
+ 
+     auto arrange_label = new wxStaticText(this, wxID_ANY, _L("Auto arrange plate after cloning") + ":", wxDefaultPosition, wxDefaultSize, 0);
+@@ -34,7 +34,7 @@
+     m_arrange_cb = new ::CheckBox(this);
+     m_arrange_cb->SetValue(m_config->get("auto_arrange") == "true");
+ 
+-    f_sizer->Add(arrange_label, 0, wxEXPAND | wxALIGN_CENTER_VERTICAL);
++    f_sizer->Add(arrange_label, 0, wxEXPAND);
+     f_sizer->Add(m_arrange_cb , 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, FromDIP(5));
+ 
+     v_sizer->Add(f_sizer, 1, wxEXPAND | wxALL, FromDIP(10));
+@@ -46,7 +46,7 @@
+     m_progress->SetProgressForedColour(StateColor::darkModeColorFor(wxColour("#DFDFDF")));
+     m_progress->SetDoubleBuffered(true);
+     m_progress->Hide();
+-    bottom_sizer->Add(m_progress, 2, wxEXPAND | wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++    bottom_sizer->Add(m_progress, 2, wxEXPAND | wxLEFT, FromDIP(10));
+ 
+     auto dlg_btns = new DialogButtons(this, {"Fill", "OK", "Cancel"}, "", 1 /*left_aligned*/);
+ 
+--- a/src/slic3r/GUI/Field.cpp	2026-04-13 12:30:16.000000000 +0200
++++ b/src/slic3r/GUI/Field.cpp	2026-04-13 12:30:35.000000000 +0200
+@@ -2308,7 +2308,7 @@
+ 	m_textctrl->SetFont(Slic3r::GUI::wxGetApp().normal_font());
+ 	m_textctrl->SetBackgroundStyle(wxBG_STYLE_PAINT);
+ 
+-	temp->Add(m_slider, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL, 0);
++	temp->Add(m_slider, 1, wxEXPAND, 0);
+ 	temp->Add(m_textctrl, 0, wxALIGN_CENTER_VERTICAL, 0);
+ 
+ 	m_slider->Bind(wxEVT_SLIDER, ([this](wxCommandEvent e) {
+--- a/src/slic3r/GUI/FilamentMapPanel.cpp	2026-04-13 12:30:35.000000000 +0200
++++ b/src/slic3r/GUI/FilamentMapPanel.cpp	2026-04-13 12:48:56.000000000 +0200
+@@ -54,14 +54,14 @@
+     m_right_panel->SetMinSize({ FromDIP(260),-1 });
+ 
+     drag_sizer->AddStretchSpacer();
+-    drag_sizer->Add(m_left_panel, 1, wxALIGN_CENTER | wxEXPAND);
++    drag_sizer->Add(m_left_panel, 1, wxEXPAND);
+     drag_sizer->AddSpacer(FromDIP(7));
+     drag_sizer->Add(m_switch_btn, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(1));
+     drag_sizer->AddSpacer(FromDIP(7));
+-    drag_sizer->Add(m_right_panel, 1, wxALIGN_CENTER | wxEXPAND);
++    drag_sizer->Add(m_right_panel, 1, wxEXPAND);
+     drag_sizer->AddStretchSpacer();
+ 
+-    top_sizer->Add(drag_sizer, 0, wxALIGN_CENTER | wxEXPAND);
++    top_sizer->Add(drag_sizer, 0, wxEXPAND);
+ 
+     m_tips = new Label(this, _L("Tip: You can drag the filaments to reassign them to different nozzles."));
+     m_tips->SetFont(Label::Body_14);
+@@ -133,14 +133,14 @@
+ 
+     auto label_sizer = new wxBoxSizer(wxHORIZONTAL);
+     label_sizer->AddStretchSpacer();
+-    label_sizer->Add(m_btn, 0, wxALIGN_CENTER | wxEXPAND | wxLEFT, FromDIP(1));
+-    label_sizer->Add(m_label, 0, wxALIGN_CENTER | wxEXPAND| wxALL, FromDIP(3));
++    label_sizer->Add(m_btn, 0, wxEXPAND | wxLEFT, FromDIP(1));
++    label_sizer->Add(m_label, 0, wxEXPAND | wxALL, FromDIP(3));
+     label_sizer->AddStretchSpacer();
+ 
+     m_disable_tip = new Label(this, _L("(Sync with printer)"));
+ 
+     sizer->AddSpacer(FromDIP(32));
+-    sizer->Add(label_sizer, 0, wxALIGN_CENTER | wxEXPAND);
++    sizer->Add(label_sizer, 0, wxEXPAND);
+     sizer->Add(m_disable_tip, 0, wxALIGN_CENTER);
+     sizer->AddSpacer(FromDIP(3));
+ 
+@@ -154,7 +154,7 @@
+     detail_sizer->Add(m_detail, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, horizontal_margin);
+     detail_sizer->AddStretchSpacer();
+ 
+-    sizer->Add(detail_sizer, 0, wxALIGN_CENTER | wxEXPAND);
++    sizer->Add(detail_sizer, 0, wxEXPAND);
+     sizer->AddSpacer(FromDIP(10));
+ 
+     SetSizer(sizer);
+@@ -364,7 +364,7 @@
+     m_label->Wrap(FromDIP(500));
+ 
+     sizer->AddStretchSpacer();
+-    sizer->Add(m_label, 1, wxEXPAND | wxALIGN_CENTER);
++    sizer->Add(m_label, 1, wxEXPAND);
+     sizer->AddStretchSpacer();
+ 
+     SetSizerAndFit(sizer);
+--- a/src/slic3r/GUI/PlateSettingsDialog.cpp	2026-04-13 12:31:12.000000000 +0200
++++ b/src/slic3r/GUI/PlateSettingsDialog.cpp	2026-04-13 18:35:31.357191098 +0200
+@@ -189,9 +189,9 @@
+     m_other_layer_print_seq_choice->SetSelection(0);
+     wxStaticText* other_layer_txt = new wxStaticText(this, wxID_ANY, _L("Other layer filament sequence"));
+     other_layer_txt->SetFont(Label::Body_14);
+-    title_sizer->Add(other_layer_txt, 0, wxALIGN_CENTER | wxALIGN_LEFT, 0);
++    title_sizer->Add(other_layer_txt, 0, 0, 0);
+     title_sizer->AddStretchSpacer();
+-    title_sizer->Add(m_other_layer_print_seq_choice, 0, wxALIGN_CENTER | wxALIGN_RIGHT, 0);
++    title_sizer->Add(m_other_layer_print_seq_choice, 0, 0, 0);
+ 
+     wxBoxSizer* buttons_sizer = new wxBoxSizer(wxHORIZONTAL);
+     ScalableButton* add_layers_btn = new ScalableButton(this, wxID_ANY, m_bmp_add);
+@@ -313,7 +313,7 @@
+     single_layer_input_sizer->Add(end_layer_input, 0, wxLEFT | wxRIGHT | wxALIGN_CENTER, FromDIP(5));
+     single_layer_input_sizer->AddStretchSpacer();
+     single_layer_input_sizer->Add(drag_canvas, 0, wxLEFT | wxALIGN_CENTER, FromDIP(5));
+-    layer_panel_sizer->Add(single_layer_input_sizer, 0, wxEXPAND | wxALIGN_CENTER | wxBOTTOM, FromDIP(10));
++    layer_panel_sizer->Add(single_layer_input_sizer, 0, wxEXPAND | wxBOTTOM, FromDIP(10));
+     m_layer_input_sizer_list.push_back(single_layer_input_sizer);
+     m_begin_layer_input_list.push_back(begin_layer_input);
+     m_end_layer_input_list.push_back(end_layer_input);
+--- a/src/slic3r/GUI/PartSkipDialog.cpp	2026-04-13 12:31:29.000000000 +0200
++++ b/src/slic3r/GUI/PartSkipDialog.cpp	2026-04-13 12:31:41.000000000 +0200
+@@ -197,9 +197,9 @@
+ #else
+     m_dlg_btn_sizer->Add(m_tot_label, 0, wxALIGN_CENTER_VERTICAL, 0);
+ #endif
+-    m_dlg_btn_sizer->Add(0, 0, 1, wxEXPAND | wxALIGN_CENTER_VERTICAL, FromDIP(0));
++    m_dlg_btn_sizer->Add(0, 0, 1, wxEXPAND, FromDIP(0));
+     m_dlg_btn_sizer->Add(m_apply_btn, 0, wxALIGN_CENTER_VERTICAL, FromDIP(0));
+-    m_dlg_btn_sizer->Add(0, 0, 0, wxLEFT | wxEXPAND | wxALIGN_CENTER_VERTICAL, FromDIP(24));
++    m_dlg_btn_sizer->Add(0, 0, 0, wxLEFT | wxEXPAND, FromDIP(24));
+ 
+     m_dlg_placeholder = new wxPanel(m_book_third_panel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+     m_dlg_placeholder->SetMinSize(wxSize(-1, FromDIP(15)));
+--- a/src/slic3r/GUI/OptionsGroup.cpp	2026-04-13 12:31:41.000000000 +0200
++++ b/src/slic3r/GUI/OptionsGroup.cpp	2026-04-13 14:54:46.000000000 +0200
+@@ -367,7 +367,7 @@
+                 // so we need a horizontal sizer to arrange these things
+                 auto sizer = new wxBoxSizer(wxHORIZONTAL);
+                 grid_sizer->Add(sizer, 0, wxEXPAND | (staticbox ? wxALL : wxBOTTOM | wxTOP | wxLEFT), staticbox ? 0 : 1);
+-                sizer->Add(label, 0, (staticbox ? 0 : wxALIGN_RIGHT | wxRIGHT) | wxALIGN_CENTER_VERTICAL, 5);
++                sizer->Add(label, 0, (staticbox ? 0 : wxRIGHT) | wxALIGN_CENTER_VERTICAL, 5);
+             }
+             if (label != nullptr && line.label_tooltip != "")
+                 label->SetToolTip(line.label_tooltip);
+--- a/src/slic3r/GUI/ObjColorDialog.cpp	2026-04-13 12:33:20.000000000 +0200
++++ b/src/slic3r/GUI/ObjColorDialog.cpp	2026-04-13 15:30:58.000000000 +0200
+@@ -49,7 +49,7 @@
+         btn_sizer->AddSpacer(FromDIP(25));
+         auto *tips = new HyperLink(this, _L("Wiki Guide")); // ORCA
+         tips->SetURL("https://www.orcaslicer.com/wiki/general-settings/import_export.html#obj");
+-        btn_sizer->Add(tips, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
++        btn_sizer->Add(tips, 0, wxALIGN_CENTER_VERTICAL);
+     }
+     btn_sizer->AddStretchSpacer();
+ 
+@@ -57,7 +57,7 @@
+     m_button_list[wxOK]     = dlg_btns->GetOK();
+     m_button_list[wxCANCEL] = dlg_btns->GetCANCEL();
+ 
+-    btn_sizer->Add(dlg_btns, 0, wxEXPAND | wxALIGN_CENTER_VERTICAL);
++    btn_sizer->Add(dlg_btns, 0, wxEXPAND);
+     return btn_sizer;
+ }
+ 
+@@ -310,8 +310,8 @@
+                                               wxBORDER_NONE | wxBU_AUTODRAW);
+                 m_image_button->SetBitmap(image);
+                 m_image_button->SetCanFocus(false);
+-                icon_sizer->Add(m_image_button, 0, wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL,
+-                                FromDIP(0)); // wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL
++                icon_sizer->Add(m_image_button, 0, wxEXPAND | wxALL,
++                                FromDIP(0)); // wxEXPAND | wxALL
+                 cur_combox->Raise();//for mac
+ 
+             m_sizer_simple->Add(icon_sizer, FromDIP(0), wxALIGN_CENTER | wxALL, FromDIP(0));
+@@ -526,7 +526,7 @@
+     icon->SetBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), std::to_string(id + 1), FromDIP(16), FromDIP(16)));
+     icon->SetCanFocus(false);
+     m_extruder_icon_list.emplace_back(icon);
+-    icon_sizer->Add(icon, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
++    icon_sizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
+     //icon_sizer->AddSpacer(FromDIP(5));
+     return icon_sizer;
+ }
+@@ -914,17 +914,17 @@
+     icon->SetBitmap(*get_extruder_color_icon(color.GetAsString(wxC2S_HTML_SYNTAX).ToStdString(), "", FromDIP(16), FromDIP(16)));
+     icon->SetCanFocus(false);
+     m_color_cluster_icon_list.emplace_back(icon);
+-    icon_sizer->Add(icon, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
++    icon_sizer->Add(icon, 0, wxALIGN_CENTER_VERTICAL, 0); // wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM
+     icon_sizer->AddSpacer(FromDIP(10));
+ 
+     wxStaticText *map_text = new wxStaticText(parent, wxID_ANY, _L(u8"—> "));
+     map_text->SetFont(Label::Head_12);
+-    icon_sizer->Add(map_text, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
++    icon_sizer->Add(map_text, 0, wxALIGN_CENTER_VERTICAL, 0);
+ 
+     for (size_t i = m_result_icon_list.size(); i < id + 1; i++) {
+         m_result_icon_list.emplace_back(new ButtonState());
+     }
+     m_result_icon_list[id]->bitmap_combox = CreateEditorCtrl(parent, id);
+-    icon_sizer->Add(m_result_icon_list[id]->bitmap_combox, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
++    icon_sizer->Add(m_result_icon_list[id]->bitmap_combox, 0, wxALIGN_CENTER_VERTICAL, 0);
+     return icon_sizer;
+ }
+--- a/src/slic3r/GUI/SysInfoDialog.cpp	2026-04-13 12:35:31.000000000 +0200
++++ b/src/slic3r/GUI/SysInfoDialog.cpp	2026-04-13 18:37:45.508829105 +0200
+@@ -109,7 +109,7 @@
+         title_font.SetFamily(wxFONTFAMILY_ROMAN);
+         title_font.SetPointSize(22);
+         title->SetFont(title_font);
+-        vsizer->Add(title, 0, wxEXPAND | wxALIGN_LEFT | wxTOP, wxGetApp().em_unit()/*50*/);
++        vsizer->Add(title, 0, wxEXPAND | wxTOP, wxGetApp().em_unit()/*50*/);
+     }
+ 
+     // main_info_text
+--- a/src/slic3r/GUI/SyncAmsInfoDialog.cpp	2026-04-13 12:35:55.000000000 +0200
++++ b/src/slic3r/GUI/SyncAmsInfoDialog.cpp	2026-04-13 18:41:52.846849133 +0200
+@@ -495,7 +495,7 @@
+         m_swipe_left_button->SetBitmap(m_swipe_left_bmp_normal.bmp());
+     });
+     m_swipe_left_button->Bind(wxEVT_BUTTON, &SyncAmsInfoDialog::to_previous_plate, this);
+-    swipe_left__sizer->Add(m_swipe_left_button, 0, wxALIGN_CENTER | wxEXPAND | wxALIGN_CENTER_VERTICAL);
++    swipe_left__sizer->Add(m_swipe_left_button, 0, wxEXPAND);
+     swipe_left__sizer->AddStretchSpacer();
+     view_two_thumbnail_sizer->Add(swipe_left__sizer, 0, wxEXPAND);
+     view_two_thumbnail_sizer->AddSpacer(FromDIP(24));
+@@ -507,19 +507,19 @@
+         m_left_image_button     = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition, wxSize(FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH), FromDIP(LEFT_THUMBNAIL_SIZE_WIDTH)),
+                                            wxBORDER_NONE | wxBU_AUTODRAW);
+         m_left_sizer_thumbnail = create_sizer_thumbnail(m_left_image_button, true);
+-        m_two_image_panel_sizer->Add(m_left_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, FromDIP(8));
++        m_two_image_panel_sizer->Add(m_left_sizer_thumbnail, FromDIP(0), wxEXPAND | wxLEFT | wxTOP | wxBOTTOM, FromDIP(8));
+         m_two_image_panel_sizer->AddSpacer(FromDIP(5));
+ 
+         m_right_image_button = new wxButton(m_two_image_panel, wxID_ANY, {}, wxDefaultPosition,
+                                             wxSize(FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH), FromDIP(RIGHT_THUMBNAIL_SIZE_WIDTH)),
+                                             wxBORDER_NONE | wxBU_AUTODRAW);
+         m_right_sizer_thumbnail = create_sizer_thumbnail(m_right_image_button, false);
+-        m_two_image_panel_sizer->Add(m_right_sizer_thumbnail, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
++        m_two_image_panel_sizer->Add(m_right_sizer_thumbnail, FromDIP(0), wxEXPAND | wxRIGHT | wxTOP | wxBOTTOM, FromDIP(8));
+         m_two_image_panel->SetSizer(m_two_image_panel_sizer);
+         m_two_image_panel->Layout();
+         m_two_image_panel->Fit();
+ 
+-        view_two_thumbnail_sizer->Add(m_two_image_panel, FromDIP(0), wxALIGN_LEFT | wxEXPAND | wxTOP, FromDIP(2));
++        view_two_thumbnail_sizer->Add(m_two_image_panel, FromDIP(0), wxEXPAND | wxTOP, FromDIP(2));
+     }
+     view_two_thumbnail_sizer->AddSpacer(FromDIP(20));
+     auto swipe_right__sizer = new wxBoxSizer(wxVERTICAL);
+@@ -536,7 +536,7 @@
+     });
+     m_swipe_right_button->Bind(wxEVT_BUTTON, &SyncAmsInfoDialog::to_next_plate, this);
+ 
+-    swipe_right__sizer->Add(m_swipe_right_button, 0, wxALIGN_CENTER | wxEXPAND | wxALIGN_CENTER_VERTICAL);
++    swipe_right__sizer->Add(m_swipe_right_button, 0, wxEXPAND);
+     swipe_right__sizer->AddStretchSpacer();
+     view_two_thumbnail_sizer->Add(swipe_right__sizer, 0, wxEXPAND);
+     view_two_thumbnail_sizer->AddStretchSpacer();
+@@ -546,7 +546,7 @@
+     m_choose_plate_sizer->AddStretchSpacer();
+ 
+     wxStaticText *chose_combox_title = new wxStaticText(m_two_thumbnail_panel, wxID_ANY, _CTX(L_CONTEXT("Plate", "Sync_AMS"), "Sync_AMS"));
+-    m_choose_plate_sizer->Add(chose_combox_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxEXPAND | wxTOP, FromDIP(6));
++    m_choose_plate_sizer->Add(chose_combox_title, 0, wxEXPAND | wxTOP, FromDIP(6));
+     m_choose_plate_sizer->AddSpacer(FromDIP(10));
+ 
+     m_combobox_plate = new ComboBox(m_two_thumbnail_panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(60), -1), 0, NULL, wxCB_READONLY);
+@@ -556,14 +556,14 @@
+             update_when_change_plate(m_plate_choices[e.GetSelection()]);
+         }
+     });
+-    m_choose_plate_sizer->Add(m_combobox_plate, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, FromDIP(3));
++    m_choose_plate_sizer->Add(m_combobox_plate, 0, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, FromDIP(3));
+     m_choose_plate_sizer->AddStretchSpacer();
+     m_two_thumbnail_panel_sizer->Add(m_choose_plate_sizer, 0, wxEXPAND |wxTOP, FromDIP(4));
+ 
+     m_two_thumbnail_panel->SetSizer(m_two_thumbnail_panel_sizer);
+     m_two_thumbnail_panel->Layout();
+     m_two_thumbnail_panel->Fit();
+-    m_sizer_main->Add(m_two_thumbnail_panel, FromDIP(0), wxALIGN_CENTER | wxEXPAND | wxLEFT | wxRIGHT, FromDIP(25));
++    m_sizer_main->Add(m_two_thumbnail_panel, FromDIP(0), wxEXPAND | wxLEFT | wxRIGHT, FromDIP(25));
+ 
+     update_swipe_button_state();
+ }
+@@ -717,9 +717,9 @@
+         m_colormap_btn      = new CapsuleButton(m_scrolledWindow, PageType::ptColorMap, _L("Mapping"), true);
+         m_override_btn      = new CapsuleButton(m_scrolledWindow, PageType::ptOverride, _L("Overwriting"), false);
+         m_mode_combox_sizer->AddSpacer(SyncAmsInfoDialogWidth / 2.0f - FromDIP(8) / 2.0f - m_colormap_btn->GetSize().GetX());
+-        m_mode_combox_sizer->Add(m_colormap_btn, 0, wxALIGN_CENTER | wxEXPAND | wxALL, FromDIP(2));
++        m_mode_combox_sizer->Add(m_colormap_btn, 0, wxEXPAND | wxALL, FromDIP(2));
+         m_mode_combox_sizer->AddSpacer(FromDIP(8));
+-        m_mode_combox_sizer->Add(m_override_btn, 0, wxALIGN_CENTER | wxEXPAND | wxALL, FromDIP(2));
++        m_mode_combox_sizer->Add(m_override_btn, 0, wxEXPAND | wxALL, FromDIP(2));
+         m_mode_combox_sizer->AddSpacer(SyncAmsInfoDialogWidth / 2.0f - FromDIP(8) / 2.0f - m_override_btn->GetSize().GetX() - FromDIP(60));
+         m_reset_all_btn = new ScalableButton(m_scrolledWindow, wxID_ANY, "reset_gray", wxEmptyString, wxDefaultSize, wxDefaultPosition, wxBU_EXACTFIT | wxNO_BORDER,
+                                                         true, 14);
+@@ -727,12 +727,12 @@
+         m_reset_all_btn->SetBackgroundColour(*wxWHITE);
+         m_reset_all_btn->SetToolTip(_L("Reset all filament mapping"));
+ 
+-        m_mode_combox_sizer->Add(m_reset_all_btn, 0, wxALIGN_LEFT | wxEXPAND | wxALL, FromDIP(2));
++        m_mode_combox_sizer->Add(m_reset_all_btn, 0, wxEXPAND | wxALL, FromDIP(2));
+ 
+         m_colormap_btn->Bind(wxEVT_BUTTON, &SyncAmsInfoDialog::update_when_change_map_mode,this); // update_when_change_map_mode(e.GetSelection());
+         m_override_btn->Bind(wxEVT_BUTTON, &SyncAmsInfoDialog::update_when_change_map_mode,this);
+ 
+-        bSizer->Add(m_mode_combox_sizer, FromDIP(0), wxEXPAND | wxALIGN_LEFT | wxTOP, FromDIP(10));
++        bSizer->Add(m_mode_combox_sizer, FromDIP(0), wxEXPAND | wxTOP, FromDIP(10));
+     }
+ 
+     m_basic_panel = new wxPanel(m_scrolledWindow, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
+@@ -913,14 +913,14 @@
+     {//new content//tip confirm ok button
+         wxBoxSizer *tip_sizer = new wxBoxSizer(wxHORIZONTAL);
+         m_attention_text      = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Tip") + ": ");
+-        tip_sizer->Add(m_attention_text, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
++        tip_sizer->Add(m_attention_text, 0, wxTOP, FromDIP(2));
+         m_tip_attention_color_map = _L("Only synchronize filament type and color, not including AMS slot information.");
+         m_tip_attention_override  = _L("Replace the project filaments list sequentially based on printer filaments. And unused printer filaments will be automatically added to the end of the list.");
+         m_tip_text = new Label(m_scrolledWindow, m_tip_attention_color_map, LB_AUTO_WRAP);
+         m_tip_text->SetMinSize(wxSize(SyncAttentionTipWidth, -1));
+         m_tip_text->SetMaxSize(wxSize(SyncAttentionTipWidth, -1));
+         m_tip_text->SetForegroundColour(wxColour(107, 107, 107, 100));
+-        tip_sizer->Add(m_tip_text, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
++        tip_sizer->Add(m_tip_text, 0, wxTOP, FromDIP(2));
+         tip_sizer->AddSpacer(FromDIP(20));
+         bSizer->Add(tip_sizer, 0, wxEXPAND | wxLEFT, FromDIP(25));
+ 
+@@ -936,10 +936,10 @@
+             update_more_setting(true,true);
+         });
+ 
+-        m_advace_setting_sizer->Add(m_more_setting_tips, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
++        m_advace_setting_sizer->Add(m_more_setting_tips, 0, wxTOP, FromDIP(4));
+         m_advanced_options_icon = new wxStaticBitmap(m_scrolledWindow, wxID_ANY, create_scaled_bitmap("advanced_option3", m_scrolledWindow, 18), wxDefaultPosition,
+                                                      wxSize(FromDIP(18), FromDIP(18)));
+-        m_advace_setting_sizer->Add(m_advanced_options_icon, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
++        m_advace_setting_sizer->Add(m_advanced_options_icon, 0, wxTOP, FromDIP(4));
+         more_setting_sizer->Add(m_advace_setting_sizer, 0, wxALIGN_LEFT, FromDIP(0));
+ 
+         m_append_color_sizer    = new wxBoxSizer(wxHORIZONTAL);
+@@ -955,12 +955,12 @@
+             e.Skip();
+         });
+         m_append_color_checkbox->Hide();
+-        m_append_color_sizer->Add(m_append_color_checkbox, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
++        m_append_color_sizer->Add(m_append_color_checkbox, 0, wxTOP, FromDIP(4));
+         const int gap_between_checebox_and_text = 2;
+         m_append_color_text                     = new Label(m_scrolledWindow, _L("Add unused AMS filaments to filaments list."));
+         m_append_color_text->Hide();
+         m_append_color_sizer->AddSpacer(FromDIP(gap_between_checebox_and_text));
+-        m_append_color_sizer->Add(m_append_color_text, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
++        m_append_color_sizer->Add(m_append_color_text, 0, wxTOP, FromDIP(4));
+ 
+         more_setting_sizer->Add(m_append_color_sizer, 0, wxALIGN_LEFT | wxTOP, FromDIP(4));
+ 
+@@ -976,13 +976,13 @@
+             e.Skip();
+         });
+         m_merge_color_checkbox->Hide();
+-        m_merge_color_sizer->Add(m_merge_color_checkbox, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
++        m_merge_color_sizer->Add(m_merge_color_checkbox, 0, wxTOP, FromDIP(2));
+ 
+ 
+         m_merge_color_text = new Label(m_scrolledWindow, _L("Automatically merge the same colors in the model after mapping."));
+         m_merge_color_text->Hide();
+         m_merge_color_sizer->AddSpacer(FromDIP(gap_between_checebox_and_text));
+-        m_merge_color_sizer->Add(m_merge_color_text, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
++        m_merge_color_sizer->Add(m_merge_color_text, 0, wxTOP, FromDIP(2));
+ 
+         more_setting_sizer->Add(m_merge_color_sizer, 0, wxALIGN_LEFT | wxTOP, FromDIP(2));
+ 
+@@ -995,7 +995,7 @@
+         m_confirm_title = new Label(m_scrolledWindow, m_undone_str, LB_AUTO_WRAP);
+         m_confirm_title->SetMinSize(wxSize(SyncLabelWidth, -1));
+         m_confirm_title->SetMaxSize(wxSize(SyncLabelWidth, -1));
+-        confirm_boxsizer->Add(m_confirm_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxTOP | wxRIGHT, FromDIP(10));
++        confirm_boxsizer->Add(m_confirm_title, 0, wxALIGN_LEFT | wxTOP | wxRIGHT, FromDIP(10));
+         m_are_you_sure_title = new wxStaticText(m_scrolledWindow, wxID_ANY, _L("Are you sure to synchronize the filaments?"));
+         //m_are_you_sure_title->SetFont(Label::Head_14);
+         confirm_boxsizer->Add(m_are_you_sure_title, 0, wxALIGN_LEFT  | wxTOP, FromDIP(0));
+@@ -1014,7 +1014,7 @@
+         wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
+         bSizer_button->SetMinSize(wxSize(FromDIP(100), -1));
+         /* m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
+-         bSizer_button->Add(m_checkbox, 0, wxALIGN_LEFT);*/
++         bSizer_button->Add(m_checkbox, 0, 0);*/
+         bSizer_button->AddStretchSpacer(1);
+         StateColor btn_bg_green(std::pair<wxColour, int>(wxColour(0, 137, 123), StateColor::Pressed), std::pair<wxColour, int>(wxColour(38, 166, 154), StateColor::Hovered),
+                                 std::pair<wxColour, int>(AMS_CONTROL_BRAND_COLOUR, StateColor::Normal));
+@@ -1026,7 +1026,7 @@
+         m_button_ok->SetSize(OK_BUTTON_SIZE);
+         m_button_ok->SetMinSize(OK_BUTTON_SIZE);
+         m_button_ok->SetCornerRadius(FromDIP(12));
+-        bSizer_button->Add(m_button_ok, 0, wxALIGN_RIGHT | wxLEFT | wxTOP, FromDIP(10));
++        bSizer_button->Add(m_button_ok, 0, wxLEFT | wxTOP, FromDIP(10));
+ 
+         m_button_ok->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &e) {
+             deal_ok();
+@@ -1044,7 +1044,7 @@
+         m_button_cancel->SetSize(CANCEL_BUTTON_SIZE);
+         m_button_cancel->SetMinSize(CANCEL_BUTTON_SIZE);
+         m_button_cancel->SetCornerRadius(FromDIP(12));
+-        bSizer_button->Add(m_button_cancel, 0, wxALIGN_RIGHT | wxLEFT | wxTOP, FromDIP(10));
++        bSizer_button->Add(m_button_cancel, 0, wxLEFT | wxTOP, FromDIP(10));
+ 
+         m_button_cancel->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &e) {
+             EndModal(wxID_CANCEL);
+--- a/src/slic3r/GUI/Plater.cpp	2026-04-13 12:37:58.000000000 +0200
++++ b/src/slic3r/GUI/Plater.cpp	2026-04-13 13:56:54.000000000 +0200
+@@ -528,11 +528,11 @@
+ 
+         //if (isBBL) {
+             wxBoxSizer *hsizer = new wxBoxSizer(wxHORIZONTAL);
+-            hsizer->Add(image_printer, 0, wxLEFT  | wxALIGN_LEFT  | wxALIGN_CENTER_VERTICAL, FromDIP(10));
+-            hsizer->Add(combo_printer, 1, wxEXPAND | wxALL | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
++            hsizer->Add(image_printer, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(10));
++            hsizer->Add(combo_printer, 1, wxEXPAND | wxALL, FromDIP(2));
+             hsizer->AddSpacer(FromDIP(2));
+-            hsizer->Add(btn_edit_printer, 0, wxRIGHT | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(SidebarProps::IconSpacing()));
+-            //hsizer->Add(btn_connect_printer, 0, wxRIGHT | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(SidebarProps::IconSpacing()));
++            hsizer->Add(btn_edit_printer, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(SidebarProps::IconSpacing()));
++            //hsizer->Add(btn_connect_printer, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(SidebarProps::IconSpacing()));
+             panel_printer_preset->SetSizer(hsizer);
+         //} else {
+         //    wxBoxSizer *hsizer = new wxBoxSizer(wxHORIZONTAL);
+@@ -2186,7 +2186,7 @@
+ 
+     auto search_sizer = new wxBoxSizer(wxHORIZONTAL);
+     search_sizer->Add(new wxWindow(p->m_search_bar, wxID_ANY, wxDefaultPosition, wxSize(0, 0)), 0, wxEXPAND|wxLEFT|wxRIGHT, FromDIP(1));
+-    search_sizer->Add(p->m_search_item, 1, wxEXPAND | wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(2));
++    search_sizer->Add(p->m_search_item, 1, wxEXPAND | wxALL, FromDIP(2));
+     p->m_search_bar->SetSizer(search_sizer);
+     p->m_search_bar->Layout();
+     search_sizer->Fit(p->m_search_bar);
+--- a/src/slic3r/GUI/PhysicalPrinterDialog.cpp	2026-04-13 12:39:33.000000000 +0200
++++ b/src/slic3r/GUI/PhysicalPrinterDialog.cpp	2026-04-13 12:40:16.000000000 +0200
+@@ -384,7 +384,7 @@
+             auto txt = new wxStaticText(parent, wxID_ANY, from_u8((boost::format("%1%\n\t%2%") % info % ca_file_hint).str()));
+             txt->SetFont(wxGetApp().normal_font());
+             auto sizer = new wxBoxSizer(wxHORIZONTAL);
+-            sizer->Add(txt, 1, wxEXPAND|wxALIGN_LEFT);
++            sizer->Add(txt, 1, wxEXPAND);
+             return sizer;
+         };
+         m_optgroup->append_line(line);
+--- a/src/slic3r/GUI/StatusPanel.cpp	2026-04-13 12:40:16.000000000 +0200
++++ b/src/slic3r/GUI/StatusPanel.cpp	2026-04-13 18:44:19.620641258 +0200
+@@ -780,10 +780,10 @@
+         }
+     });
+ 
+-    printingstage_horizontal_sizer->Add(m_printing_stage_value, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
++    printingstage_horizontal_sizer->Add(m_printing_stage_value, 0, wxALIGN_CENTER_VERTICAL, 0);
+     printingstage_horizontal_sizer->Add(m_question_button, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(5));
+-    printingstage_vertical_sizer->Add(printingstage_horizontal_sizer, 0, wxALIGN_CENTER_VERTICAL, 0);
+-    printingstage_vertical_sizer->Add(m_printing_stage_underline, 0, wxEXPAND |wxALIGN_TOP, 0);
++    printingstage_vertical_sizer->Add(printingstage_horizontal_sizer, 0, 0, 0);
++    printingstage_vertical_sizer->Add(m_printing_stage_underline, 0, wxEXPAND, 0);
+     m_printing_stage_panel->SetSizer(printingstage_vertical_sizer);
+ 
+     // Orca: display the end time of the print
+@@ -792,7 +792,7 @@
+     m_staticText_progress_end->SetFont(
+         wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("HarmonyOS Sans SC")));
+     m_staticText_progress_end->SetForegroundColour(wxColour(146, 146, 146));
+-    bSizer_finish_time->Add(m_printing_stage_panel, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
++    bSizer_finish_time->Add(m_printing_stage_panel, 0, wxALIGN_CENTER_VERTICAL, 0);
+     bSizer_finish_time->Add(0, 0, 1, wxEXPAND, 0);
+     bSizer_finish_time->Add(m_staticText_progress_end, 0, wxLEFT | wxEXPAND, 0);
+     // penel_finish_time->SetMaxSize(wxSize(FromDIP(600), -1));
+@@ -2108,7 +2108,7 @@
+     m_filament_load_img->SetBackgroundColour(*wxWHITE);
+ 
+     wxBoxSizer *steps_sizer = new wxBoxSizer(wxHORIZONTAL);
+-    steps_sizer->Add(m_filament_step, 0, wxALIGN_LEFT, FromDIP(20));
++    steps_sizer->Add(m_filament_step, 0, 0, FromDIP(20));
+     steps_sizer->Add(m_filament_load_img, 0, wxALIGN_TOP, FromDIP(30));
+     steps_sizer->AddStretchSpacer();
+ 
+@@ -2122,7 +2122,7 @@
+     });
+ 
+ 
+-    sizer_box->Add(steps_sizer, 0, wxEXPAND | wxALIGN_LEFT | wxTOP, FromDIP(5));
++    sizer_box->Add(steps_sizer, 0, wxEXPAND | wxTOP, FromDIP(5));
+     sizer_box->Add(m_button_retry, 0, wxLEFT, FromDIP(28));
+     sizer_box->Add(0, 0, 0, wxTOP, FromDIP(5));
+     m_filament_load_box->SetBackgroundColour(*wxWHITE);
+--- a/src/slic3r/GUI/BindDialog.cpp	2026-04-13 13:45:37.000000000 +0200
++++ b/src/slic3r/GUI/BindDialog.cpp	2026-04-13 13:45:42.000000000 +0200
+@@ -151,7 +151,7 @@
+     sizer_request->Add(0, 0, 0, wxTOP, FromDIP(5));
+     sizer_request->Add(ping_code_input, 0, wxLEFT, FromDIP(10));
+     sizer_request->Add(0, 0, 0, wxTOP, FromDIP(10));
+-    sizer_request->Add(m_sizer_button, 0, wxALIGN_RIGHT | wxRIGHT | wxBOTTOM, ButtonProps::ChoiceButtonGap());
++    sizer_request->Add(m_sizer_button, 0, wxRIGHT | wxBOTTOM, ButtonProps::ChoiceButtonGap());
+     request_bind_panel->SetSizer(sizer_request);
+     request_bind_panel->Layout();
+     request_bind_panel->Fit();
+@@ -179,7 +179,7 @@
+     sizer_binding->Add(0, 0, 0, wxTOP, FromDIP(10));
+     sizer_binding->Add(m_loading_tip_txt, 0, wxALIGN_CENTER, 0);
+     sizer_binding->Add(0, 0, 0, wxTOP, FromDIP(30));
+-    sizer_binding->Add(m_sizer_binding_button, 0, wxALIGN_RIGHT | wxRIGHT | wxBOTTOM, ButtonProps::ChoiceButtonGap());
++    sizer_binding->Add(m_sizer_binding_button, 0, wxRIGHT | wxBOTTOM, ButtonProps::ChoiceButtonGap());
+     binding_panel->SetSizer(sizer_binding);
+     binding_panel->Layout();
+     binding_panel->Fit();
+--- a/src/slic3r/GUI/BaseTransparentDPIFrame.cpp	2026-04-13 13:49:56.000000000 +0200
++++ b/src/slic3r/GUI/BaseTransparentDPIFrame.cpp	2026-04-13 15:38:11.000000000 +0200
+@@ -48,7 +48,7 @@
+     auto image_sizer  = new wxBoxSizer(wxVERTICAL);
+     auto imgsize      = FromDIP(25);
+     auto completedimg = new wxStaticBitmap(this, wxID_ANY, create_scaled_bitmap("completed", this, 25), wxDefaultPosition, wxSize(imgsize, imgsize), 0);
+-    image_sizer->Add(completedimg, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxALL, FromDIP(0));
++    image_sizer->Add(completedimg, 0, wxALIGN_LEFT | wxALL, FromDIP(0));
+     image_sizer->AddStretchSpacer();
+     text_sizer->Add(image_sizer);
+     text_sizer->AddSpacer(FromDIP(5));
+@@ -56,9 +56,9 @@
+     m_finish_text->SetMinSize(wxSize(FromDIP(win_width - 64), -1));
+     m_finish_text->SetMaxSize(wxSize(FromDIP(win_width - 64), -1));
+     m_finish_text->SetForegroundColour(wxColour(255, 255, 255, 255));
+-    text_sizer->Add(m_finish_text, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxALL, 0);
++    text_sizer->Add(m_finish_text, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
+     text_sizer->AddSpacer(FromDIP(20));
+-    m_sizer_main->Add(text_sizer, FromDIP(0), wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL | wxTOP, FromDIP(15));
++    m_sizer_main->Add(text_sizer, FromDIP(0), wxALIGN_LEFT | wxTOP, FromDIP(15));
+ 
+     wxBoxSizer *bSizer_button = new wxBoxSizer(wxHORIZONTAL);
+     bSizer_button->SetMinSize(wxSize(FromDIP(100), -1));
+@@ -69,7 +69,7 @@
+     m_button_ok->SetStyle(ButtonStyle::Confirm, ButtonType::Window);
+     m_button_ok->SetSize(wxSize(FromDIP(60), FromDIP(30)));
+     m_button_ok->SetMinSize(wxSize(FromDIP(90), FromDIP(30)));
+-    bSizer_button->Add(m_button_ok, 0, wxALIGN_RIGHT | wxLEFT | wxTOP, FromDIP(10));
++    bSizer_button->Add(m_button_ok, 0, wxLEFT | wxTOP, FromDIP(10));
+ 
+     m_button_ok->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &e) { deal_ok(); });
+ 
+@@ -77,7 +77,7 @@
+     m_button_cancel->SetStyle(ButtonStyle::Regular, ButtonType::Window);
+     m_button_cancel->SetSize(wxSize(FromDIP(65), FromDIP(30)));
+     m_button_cancel->SetMinSize(wxSize(FromDIP(65), FromDIP(30)));
+-    bSizer_button->Add(m_button_cancel, 0, wxALIGN_RIGHT | wxLEFT | wxTOP, FromDIP(10));
++    bSizer_button->Add(m_button_cancel, 0, wxLEFT | wxTOP, FromDIP(10));
+ 
+     m_button_cancel->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &e) { deal_cancel(); });
+ 
+--- a/src/slic3r/GUI/ExtrusionCalibration.cpp	2026-04-13 14:48:49.000000000 +0200
++++ b/src/slic3r/GUI/ExtrusionCalibration.cpp	2026-04-13 14:48:54.000000000 +0200
+@@ -184,8 +184,8 @@
+     m_button_next_step->Bind(wxEVT_BUTTON, &ExtrusionCalibration::on_click_next, this);
+     m_button_next_step->Hide();
+ 
+-    cali_sizer->Add(m_info_text, 10, wxALIGN_LEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL, FromDIP(10));
+-    cali_sizer->Add(m_error_text, 10, wxALIGN_LEFT | wxRIGHT | wxALIGN_CENTRE_VERTICAL, FromDIP(10));
++    cali_sizer->Add(m_info_text, 10, wxRIGHT | wxALIGN_CENTRE_VERTICAL, FromDIP(10));
++    cali_sizer->Add(m_error_text, 10, wxRIGHT | wxALIGN_CENTRE_VERTICAL, FromDIP(10));
+     cali_sizer->AddStretchSpacer();
+     cali_sizer->Add(m_button_cali, 0, wxRIGHT | wxALIGN_CENTRE_VERTICAL, FromDIP(10));
+     cali_sizer->Add(m_cali_cancel, 0, wxRIGHT | wxALIGN_CENTRE_VERTICAL, FromDIP(10));
+--- a/src/slic3r/GUI/SelectMachine.cpp	2026-04-13 15:01:18.000000000 +0200
++++ b/src/slic3r/GUI/SelectMachine.cpp	2026-04-13 15:01:22.000000000 +0200
+@@ -4694,10 +4694,10 @@
+      m_printoption_item = new PrintOptionItem(this, m_ops, param);
+      m_printoption_item->SetFont(Label::Body_13);
+ 
+-     sizer->Add(m_printoption_title, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
+-     sizer->Add(m_printoption_tips, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
++     sizer->Add(m_printoption_title, 0, wxALIGN_CENTER_VERTICAL, 0);
++     sizer->Add(m_printoption_tips, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(2));
+      sizer->AddStretchSpacer();
+-     sizer->Add(m_printoption_item, 0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
++     sizer->Add(m_printoption_item, 0, wxALIGN_CENTER_VERTICAL, 0);
+ 
+      SetSizer(sizer);
+      Layout();
+--- a/src/slic3r/GUI/ThermalPreconditioningDialog.cpp	2026-04-13 15:04:05.000000000 +0200
++++ b/src/slic3r/GUI/ThermalPreconditioningDialog.cpp	2026-04-13 18:46:21.778132825 +0200
+@@ -74,8 +74,8 @@
+ 
+     // Layout
+     main_sizer->Add(0, 0, 1, wxEXPAND);
+-    main_sizer->Add(m_remaining_time_label, 0, wxALIGN_CENTER);
+-    main_sizer->Add(m_explanation_label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, FromDIP(25));
++    main_sizer->Add(m_remaining_time_label, 0, 0);
++    main_sizer->Add(m_explanation_label, 0, wxLEFT | wxRIGHT, FromDIP(25));
+     main_sizer->Add(0, 0, 1, wxEXPAND);
+     main_sizer->Add(m_ok_button, 0, wxALIGN_RIGHT | wxRIGHT | wxBOTTOM, FromDIP(20));
+ 
+--- a/src/slic3r/GUI/StepMeshDialog.cpp	2026-04-13 15:07:55.000000000 +0200
++++ b/src/slic3r/GUI/StepMeshDialog.cpp	2026-04-13 18:49:06.014138161 +0200
+@@ -132,19 +132,19 @@
+     wxStaticText* linear_title = new wxStaticText(this,
+                                                   wxID_ANY, _L("Linear Deflection") + ": ");
+     linear_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+-    linear_sizer->Add(linear_title, 0, wxALIGN_LEFT);
++    linear_sizer->Add(linear_title, 0, 0);
+     linear_sizer->AddStretchSpacer(1);
+     wxSlider* linear_slider = new wxSlider(this, wxID_ANY,
+                                            SLIDER_SCALE(get_linear_defletion()),
+                                            1, 100, wxDefaultPosition,
+                                            wxSize(SLIDER_WIDTH, SLIDER_HEIGHT),
+                                            wxSL_HORIZONTAL);
+-    linear_sizer->Add(linear_slider, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
++    linear_sizer->Add(linear_slider, 0, wxLEFT, FromDIP(5));
+ 
+     auto linear_input = new ::TextInput(this, m_linear_last, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(TEXT_CTRL_WIDTH, -1), wxTE_CENTER);
+     linear_input->GetTextCtrl()->SetFont(Label::Body_12);
+     linear_input->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+-    linear_sizer->Add(linear_input, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
++    linear_sizer->Add(linear_input, 0, wxLEFT, FromDIP(5));
+     linear_input->Bind(wxEVT_KILL_FOCUS, ([this, linear_input](wxFocusEvent& e) {
+         wxString value = linear_input->GetTextCtrl()->GetValue();
+         if (validate_number_range(value, 0.001, 0.1)) {
+@@ -185,19 +185,19 @@
+     wxStaticText* angle_title = new wxStaticText(this,
+                                                   wxID_ANY, _L("Angle Deflection") + ": ");
+     angle_title->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+-    angle_sizer->Add(angle_title, 0, wxALIGN_LEFT);
++    angle_sizer->Add(angle_title, 0, 0);
+     angle_sizer->AddStretchSpacer(1);
+     wxSlider* angle_slider = new wxSlider(this, wxID_ANY,
+                                            SLIDER_SCALE_10(get_angle_defletion()),
+                                            1, 100, wxDefaultPosition,
+                                            wxSize(SLIDER_WIDTH, SLIDER_HEIGHT),
+                                            wxSL_HORIZONTAL);
+-    angle_sizer->Add(angle_slider, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
++    angle_sizer->Add(angle_slider, 0, wxLEFT, FromDIP(5));
+ 
+     auto angle_input = new ::TextInput(this, m_angle_last, wxEmptyString, wxEmptyString, wxDefaultPosition, wxSize(TEXT_CTRL_WIDTH, -1), wxTE_CENTER);
+     angle_input->GetTextCtrl()->SetFont(Label::Body_12);
+     angle_input->GetTextCtrl()->SetValidator(wxTextValidator(wxFILTER_NUMERIC));
+-    angle_sizer->Add(angle_input, 0, wxALIGN_RIGHT | wxLEFT, FromDIP(5));
++    angle_sizer->Add(angle_input, 0, wxLEFT, FromDIP(5));
+     angle_input->Bind(wxEVT_KILL_FOCUS, ([this, angle_input](wxFocusEvent& e) {
+         wxString value = angle_input->GetTextCtrl()->GetValue();
+         if (validate_number_range(value, 0.01, 1)) {
+@@ -239,7 +239,7 @@
+     m_split_compound_checkbox = new wxCheckBox(this, wxID_ANY, _L("Split compound and compsolid into multiple objects"), wxDefaultPosition, wxDefaultSize, 0);
+     m_split_compound_checkbox->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+     m_split_compound_checkbox->SetValue(wxGetApp().app_config->get_bool("is_split_compound"));
+-    check_sizer->Add(m_split_compound_checkbox, 0, wxALIGN_LEFT);
++    check_sizer->Add(m_split_compound_checkbox, 0, 0);
+     bSizer->Add(check_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
+ 
+     wxBoxSizer* mesh_face_number_sizer = new wxBoxSizer(wxHORIZONTAL);
+@@ -248,15 +248,15 @@
+     mesh_face_number_text = new wxStaticText(this, wxID_ANY, "0");
+     mesh_face_number_text->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+     mesh_face_number_text->SetMinSize(wxSize(FromDIP(150), -1));
+-    mesh_face_number_sizer->Add(mesh_face_number_title, 0, wxALIGN_LEFT);
+-    mesh_face_number_sizer->Add(mesh_face_number_text, 0, wxALIGN_LEFT);
++    mesh_face_number_sizer->Add(mesh_face_number_title, 0, 0);
++    mesh_face_number_sizer->Add(mesh_face_number_text, 0, 0);
+     bSizer->Add(mesh_face_number_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, LEFT_RIGHT_PADING);
+ 
+     wxBoxSizer* bSizer_button = new wxBoxSizer(wxHORIZONTAL);
+     bSizer_button->SetMinSize(wxSize(FromDIP(100), -1));
+     m_checkbox = new wxCheckBox(this, wxID_ANY, _L("Don't show again"), wxDefaultPosition, wxDefaultSize, 0);
+     m_checkbox->SetForegroundColour(StateColor::darkModeColorFor(FONT_COLOR));
+-    bSizer_button->Add(m_checkbox, 0, wxALIGN_LEFT | wxLEFT | wxALIGN_CENTER_VERTICAL, LEFT_RIGHT_PADING);
++    bSizer_button->Add(m_checkbox, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, LEFT_RIGHT_PADING);
+     bSizer_button->AddStretchSpacer(1);
+ 
+     auto dlg_btns = new DialogButtons(this, {"OK", "Cancel"});
+--- a/src/slic3r/GUI/GUI_ObjectList.cpp	2026-04-13 15:22:58.000000000 +0200
++++ b/src/slic3r/GUI/GUI_ObjectList.cpp	2026-04-13 15:23:07.000000000 +0200
+@@ -119,7 +119,7 @@
+         wxDC& dc,
+         const wxString& text,
+         const wxRect& rect,
+-        int align = wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL,
++        int align = wxALIGN_CENTER_VERTICAL,
+         int flags = 0, // wxCONTROL_SELECTED wxCONTROL_FOCUSED wxCONTROL_DISABLED 
+         wxEllipsizeMode ellipsizeMode = wxELLIPSIZE_END
+     ) override
+--- a/src/slic3r/GUI/CalibrationWizardSavePage.cpp	2026-04-13 15:25:09.000000000 +0200
++++ b/src/slic3r/GUI/CalibrationWizardSavePage.cpp	2026-04-13 15:25:16.000000000 +0200
+@@ -1419,11 +1419,11 @@
+         auto save_name_input = new GridTextInput(m_grid_panel, "", "", { CALIBRATION_TEXT_MAX_LENGTH, FromDIP(24) }, item.tray_id, GridTextInputType::Name);
+         auto save_name_input_failed = new Label(m_grid_panel, " - ");
+ 
+-        column_data_sizer->Add(tray_title, 0, wxALIGN_CENTER | wxBOTTOM, ROW_GAP);
++        column_data_sizer->Add(tray_title, 0, wxBOTTOM, ROW_GAP);
+         column_data_sizer->Add(flow_ratio_value, 0, wxALIGN_LEFT | wxBOTTOM, ROW_GAP);
+-        column_data_sizer->Add(flow_ratio_value_failed, 0, wxALIGN_CENTER | wxBOTTOM, ROW_GAP);
+-        column_data_sizer->Add(save_name_input, 0, wxALIGN_CENTER | wxBOTTOM, ROW_GAP);
+-        column_data_sizer->Add(save_name_input_failed, 0, wxALIGN_CENTER | wxBOTTOM, ROW_GAP);
++        column_data_sizer->Add(flow_ratio_value_failed, 0, wxBOTTOM, ROW_GAP);
++        column_data_sizer->Add(save_name_input, 0, wxBOTTOM, ROW_GAP);
++        column_data_sizer->Add(save_name_input_failed, 0, wxBOTTOM, ROW_GAP);
+ 
+         auto set_edit_mode = [this, flow_ratio_value, flow_ratio_value_failed, save_name_input, save_name_input_failed](std::string str) {
+             if (str == "normal") {
+--- a/src/slic3r/GUI/GLTexture.cpp	2026-04-13 15:31:54.000000000 +0200
++++ b/src/slic3r/GUI/GLTexture.cpp	2026-04-13 15:31:58.000000000 +0200
+@@ -590,7 +590,7 @@
+ 
+     // draw message
+     memDC.SetTextForeground(*wxWHITE);
+-    memDC.DrawLabel(msg, wxRect(0, 0, m_width, m_height), wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
++    memDC.DrawLabel(msg, wxRect(0, 0, m_width, m_height), wxALIGN_CENTER_VERTICAL);
+ 
+     memDC.SelectObject(wxNullBitmap);
+ 
+--- a/src/slic3r/GUI/MsgDialog.cpp	2026-04-13 15:38:59.000000000 +0200
++++ b/src/slic3r/GUI/MsgDialog.cpp	2026-04-13 18:50:13.542962685 +0200
+@@ -307,7 +307,7 @@
+             wrapped_text->SetMinSize(wxSize(info_width, -1));
+             wrapped_text->SetMaxSize(wxSize(info_width, -1));
+             wrapped_text->Wrap(info_width);
+-            sizer_scrolled->Add(wrapped_text, wxALIGN_LEFT ,0);
++            sizer_scrolled->Add(wrapped_text, 0, 0);
+             sizer_scrolled->AddSpacer(5);
+             sizer_scrolled->AddStretchSpacer();
+             scrolledWindow->SetSizer(sizer_scrolled);
+--- a/src/slic3r/GUI/Widgets/AMSControl.cpp	2026-04-13 12:30:46.000000000 +0200
++++ b/src/slic3r/GUI/Widgets/AMSControl.cpp	2026-04-13 12:31:12.000000000 +0200
+@@ -1078,7 +1078,7 @@
+             else{
+                 auto ext_image = new AMSExtImage(book_panel, pos, m_total_ext_count, false);
+                 book_sizer->Add(ams1, 0, wxLEFT, FromDIP(30));
+-                book_sizer->Add(ext_image, 0, wxEXPAND | wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(30));
++                book_sizer->Add(ext_image, 0, wxEXPAND | wxLEFT, FromDIP(30));
+                 ext_image->setTotalExtNum(series_name, printer_type, total_ext_num);
+                 m_ext_image_list[infos[0].ams_id] = ext_image;
+             }
+--- a/src/slic3r/GUI/Widgets/FanControl.cpp	2026-04-13 13:32:16.000000000 +0200
++++ b/src/slic3r/GUI/Widgets/FanControl.cpp	2026-04-13 18:51:41.176032697 +0200
+@@ -370,7 +370,7 @@
+     sizer_control_top->Add(m_static_bitmap_fan, 0, wxLEFT | wxTOP, FromDIP(8));
+     sizer_control_top->Add(m_static_name, 0, wxLEFT | wxTOP, FromDIP(5));
+     sizer_control_top->Add(0, 0, 1, wxEXPAND, 0);
+-    sizer_control_top->Add(m_switch_button, 0, wxALIGN_RIGHT | wxRIGHT | wxTOP, FromDIP(5));
++    sizer_control_top->Add(m_switch_button, 0, wxRIGHT | wxTOP, FromDIP(5));
+ 
+     sizer_control->Add(sizer_control_top, 0, wxEXPAND, 0);
+ 
+@@ -1068,10 +1068,10 @@
+     m_switch_btn->Bind(wxEVT_LEFT_DOWN, &FanControlNewSwitchPanel::on_left_down, this);
+ 
+     wxSizer* m_label_sizer = new wxBoxSizer(wxHORIZONTAL);
+-    m_label_sizer->Add(label, 0, wxALIGN_LEFT, 0);
++    m_label_sizer->Add(label, 0, 0, 0);
+     m_label_sizer->AddSpacer(FromDIP(10));
+     m_label_sizer->Add(0, 1, wxEXPAND, FromDIP(10));
+-    m_label_sizer->Add(m_switch_btn, 0, wxALIGN_RIGHT, 0);
++    m_label_sizer->Add(m_switch_btn, 0, 0, 0);
+ 
+     Label* tips_label = new Label(this);
+     tips_label->SetBackgroundColour(wxColour(248, 248, 248));
+--- a/src/slic3r/GUI/Widgets/AMSItem.cpp	2026-04-13 13:54:14.000000000 +0200
++++ b/src/slic3r/GUI/Widgets/AMSItem.cpp	2026-04-13 15:33:29.000000000 +0200
+@@ -815,7 +815,7 @@
+         m_left_extruder = new AMSextruderImage(this, wxID_ANY, "left_nozzle", AMS_EXTRUDER_DOUBLE_NOZZLE_BITMAP_SIZE);
+         m_left_extruder->setShowState(true);
+         m_right_extruder->setShowState(true);
+-        m_bitmap_sizer->Add(m_left_extruder, 0, wxALIGN_LEFT | wxALIGN_TOP, 0);
++        m_bitmap_sizer->Add(m_left_extruder, 0, wxALIGN_TOP, 0);
+         m_bitmap_sizer->Add(m_right_extruder, 0, wxLEFT | wxALIGN_TOP, FromDIP(2));
+         m_bitmap_sizer->AddSpacer(2);
+     }
+@@ -836,7 +836,7 @@
+ 
+         m_left_extruder->setShowState(true);
+         m_right_extruder->setShowState(false);
+-        m_bitmap_sizer->Add(m_left_extruder, 0, wxALIGN_LEFT | wxALIGN_TOP, 0);
++        m_bitmap_sizer->Add(m_left_extruder, 0, wxALIGN_TOP, 0);
+         m_bitmap_sizer->Add(m_right_extruder, 0, wxLEFT | wxALIGN_TOP, FromDIP(3));
+     }
+ 
+@@ -3267,26 +3267,26 @@
+ 
+     //auto m_panel_road = new AMSRoad(amscan, wxID_ANY, caninfo, canindex, maxcan, wxDefaultPosition, AMS_CAN_ROAD_SIZE);
+     if (caninfo.can_id == "0" || caninfo.can_id == "1") {
+-        m_sizer_ams->Add(ams_refresh, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL, 0);
++        m_sizer_ams->Add(ams_refresh, 0, wxALIGN_CENTER_VERTICAL, 0);
+     }
+     switch (canindex){
+     case 0:
+-        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_RIGHT | wxALIGN_BOTTOM, 0);
++        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_BOTTOM, 0);
+         break;
+     case 1:
+-        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_RIGHT | wxALIGN_TOP, 0);
++        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_TOP, 0);
+         break;
+     case 2:
+-        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_LEFT | wxALIGN_TOP, 0);
++        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_TOP, 0);
+         break;
+     case 3:
+-        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_LEFT | wxALIGN_BOTTOM, 0);
++        m_sizer_ams->Add(m_panel_lib, 0, wxALIGN_BOTTOM, 0);
+         break;
+     default:
+         break;
+     }
+     if (caninfo.can_id == "2" || caninfo.can_id == "3") {
+-        m_sizer_ams->Add(ams_refresh, 0, wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 0);
++        m_sizer_ams->Add(ams_refresh, 0, wxALIGN_CENTER_VERTICAL, 0);
+     }
+     amscan->SetSizer(m_sizer_ams);
+     amscan->Layout();

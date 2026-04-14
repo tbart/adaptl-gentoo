@@ -99,14 +99,18 @@ src_prepare() {
 		rg -l "directory_iterator" | while read file; do sed -i 's/operations.hpp/directory.hpp/g' $file ; done || die
 	popd
 
-	# boost 1.90.0 does not explicit "system" module anymore
-	eapply "${FILESDIR}/boost-system.patch"
 	# distros have long used imath's "half" instead of ilmbase's "half"
 	eapply "${FILESDIR}/openvdb-imath-half.patch"
+	# boost 1.90.0 does not need explicit "system" module anymore
+	eapply "${FILESDIR}/boost-system.patch"
 	# boost 1.90.0 has new timer functions
 	eapply "${FILESDIR}/bonjour-asio-timer-fix.patch"
 	# boost 1.90.0 needs explicit -lboost_process
 	eapply "${FILESDIR}/boost-process-linking.patch"
+	# wxGTK 3.2 throws warnings when trying to set background style after window creation
+	eapply "${FILESDIR}/transparent-background-before-creation.patch"
+	# WxGTK 3.2 throws warnings when using wrong wxALIGN combinations
+	eapply "${FILESDIR}/wxGTK3.2-wxALIGN-fixes.patch"
 
 	cmake_src_prepare
 }
@@ -138,7 +142,7 @@ src_configure() {
 		-DwxWidgets_USE_STATIC=OFF
 		
 		-DORCA_TOOLS=1
-#		-DUSE_BLOSC=TRUE # Default; openvdb has blosc as default USE, so use it
+#		-DUSE_BLOSC=TRUE # Default; openvdb has blosc as default USE as well, so use it
 		
 		-DCMAKE_POLICY_VERSION_MINIMUM=3.0
 		-DCMAKE_BUILD_TYPE="Release"
@@ -158,12 +162,10 @@ src_configure() {
 
 src_install() {
 	cmake_src_install
-	#default
 	rm "${D}/usr/LICENSE.txt" || die
 	rm -r "${D}/usr/include" || die
 	rm -r "${D}/usr/lib" || die
 	# install bundled Clipper2 shared library
-	insinto /usr/lib64/orcaslicer
 	doins "${BUILD_DIR}/deps_src/clipper2/libClipper2.so.*" /usr/lib64/
 	dosym libClipper2.so.1.5.2 /usr/lib64/libClipper2.so.1
 }
