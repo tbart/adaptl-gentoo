@@ -1,0 +1,47 @@
+--- a/src/slic3r/GUI/Preferences.cpp	2026-04-30 13:31:09.574137349 +0200
++++ b/src/slic3r/GUI/Preferences.cpp	2026-04-30 13:32:01.489704822 +0200
+@@ -1324,7 +1324,7 @@
+     //// GENERAL TAB 
+     /////////////////////////////////////
+     m_pref_tabs->AppendItem(_L("General"));
+-    f_sizers.push_back(new wxFlexGridSizer(1, 1, v_gap, 0));
++    f_sizers.push_back(new wxFlexGridSizer(0, 2, v_gap, 0));
+     g_sizer = f_sizers.back();
+     g_sizer->AddGrowableCol(0, 1);
+ 
+@@ -1440,7 +1440,7 @@
+     //// CONTROL TAB 
+     /////////////////////////////////////
+     m_pref_tabs->AppendItem(_L("Control"));
+-    f_sizers.push_back(new wxFlexGridSizer(1, 1, v_gap, 0));
++    f_sizers.push_back(new wxFlexGridSizer(0, 2, v_gap, 0));
+     g_sizer = f_sizers.back();
+     g_sizer->AddGrowableCol(0, 1);
+ 
+@@ -1514,7 +1514,7 @@
+     //// ONLINE TAB 
+     /////////////////////////////////////
+     m_pref_tabs->AppendItem(_L("Online"));
+-    f_sizers.push_back(new wxFlexGridSizer(1, 1, v_gap, 0));
++    f_sizers.push_back(new wxFlexGridSizer(0, 2, v_gap, 0));
+     g_sizer = f_sizers.back();
+     g_sizer->AddGrowableCol(0, 1);
+ 
+@@ -1681,7 +1681,7 @@
+     /////////////////////////////////////
+ #ifdef _WIN32
+     m_pref_tabs->AppendItem(_L("Associate"));
+-    f_sizers.push_back(new wxFlexGridSizer(1, 1, v_gap, 0));
++    f_sizers.push_back(new wxFlexGridSizer(0, 2, v_gap, 0));
+     g_sizer = f_sizers.back();
+     g_sizer->AddGrowableCol(0, 1);
+ 
+@@ -1720,7 +1720,7 @@
+     //// DEVELOPER TAB
+     /////////////////////////////////////
+     m_pref_tabs->AppendItem(_L("Developer"));
+-    f_sizers.push_back(new wxFlexGridSizer(1, 1, v_gap, 0));
++    f_sizers.push_back(new wxFlexGridSizer(0, 2, v_gap, 0));
+     g_sizer = f_sizers.back();
+     g_sizer->AddGrowableCol(0, 1);
+ 

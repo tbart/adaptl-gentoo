@@ -111,6 +111,8 @@ src_prepare() {
 	eapply "${FILESDIR}/transparent-background-before-creation.patch"
 	# WxGTK 3.2 throws warnings when using wrong wxALIGN combinations
 	eapply "${FILESDIR}/wxGTK3.2-wxALIGN-fixes.patch"
+	# WxGTK 3.2 throws warnings when using wrong grid layouts
+	eapply "${FILESDIR}/wxGTK3.2-wxFlexGridSizer.patch"
 
 	cmake_src_prepare
 }
